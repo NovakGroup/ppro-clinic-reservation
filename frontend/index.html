@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="cs" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordinace Na Vyhlídce – Rezervační systém</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased text-slate-800 bg-slate-50">
+
+  <!-- ================= ČISTÁ, VYSOCE KONTRASTNÍ HORNÍ NAVIGACE ================= -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between gap-4">
+        
+        <!-- Levá část: Hamburger pro mobil + Logo + Textové taby bez emoji -->
+        <div class="flex min-w-0 items-center gap-4 xl:gap-6">
+          
+          <!-- Tlačítko pro mobil -->
+          <button type="button" onclick="toggleMobileNav()" class="xl:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none">
+            <span class="sr-only">Otevřít menu</span>
+            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+
+          <!-- Identita ordinace -->
+          <div class="flex shrink-0 items-center gap-2.5">
+            <div class="size-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white shadow-sm font-black text-lg leading-none">
+              +
+            </div>
+            <div class="leading-tight whitespace-nowrap">
+              <span class="block text-sm font-extrabold text-slate-900 tracking-tight">Ordinace Na Vyhlídce</span>
+              <span class="hidden sm:block text-[11px] text-slate-500 font-medium">Rezervační systém</span>
+            </div>
+          </div>
+
+          <!-- Hlavní taby (Desktop) – čisté, skvěle čitelné bez emoji -->
+          <nav class="hidden xl:flex items-center gap-1 pl-4 border-l border-slate-200 whitespace-nowrap">
+            <button onclick="switchTab('calendar')" id="tab-calendar-btn" class="px-3.5 py-2 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 transition">
+              Diář & Rezervace
+            </button>
+            <button onclick="switchTab('patients')" id="tab-patients-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+              Kartotéka pacientů
+            </button>
+            <button onclick="switchTab('visit')" id="tab-visit-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+              Odbavení & Výkony
+            </button>
+            <button onclick="switchTab('billing')" id="tab-billing-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+              Měsíční výkazy
+            </button>
+            <button onclick="switchTab('absence')" id="tab-absence-btn" class="px-3.5 py-2 rounded-lg text-xs font-bold text-rose-700 bg-rose-50/70 hover:bg-rose-100 border border-rose-200 transition">
+              Výpadek lékaře
+            </button>
+          </nav>
+        </div>
+
+        <!-- Pravá část: Akční tlačítko + Profil paní Věry -->
+        <div class="flex shrink-0 items-center gap-3">
+          
+          <button type="button" onclick="openBookingModal()" title="Nová rezervace" class="whitespace-nowrap flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95">
+            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2.25" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span class="hidden sm:inline">Nová rezervace</span>
+          </button>
+
+          <!-- Profil paní Věry (Recepce) -->
+          <div class="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-200" title="Přihlášena: Věra Kovářová (Recepce)">
+            <div class="size-9 shrink-0 rounded-full bg-indigo-50 ring-2 ring-white outline outline-1 outline-indigo-200 flex items-center justify-center font-bold text-indigo-700 text-xs">
+              VK
+            </div>
+            <div class="hidden 2xl:block text-left leading-tight whitespace-nowrap">
+              <p class="text-xs font-bold text-slate-900">Věra Kovářová</p>
+              <p class="text-[10px] text-slate-500 font-medium">Recepce</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobilní rozbalovací nabídka (čistá, bílá, vysoký kontrast) -->
+    <div id="mobile-nav-menu" class="hidden xl:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 shadow-lg">
+      <button id="mtab-calendar-btn" onclick="switchTab('calendar'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50">
+        Diář & Rezervace
+      </button>
+      <button id="mtab-patients-btn" onclick="switchTab('patients'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100">
+        Kartotéka pacientů
+      </button>
+      <button id="mtab-visit-btn" onclick="switchTab('visit'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100">
+        Odbavení & Výkony
+      </button>
+      <button id="mtab-billing-btn" onclick="switchTab('billing'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100">
+        Měsíční výkazy
+      </button>
+      <button id="mtab-absence-btn" onclick="switchTab('absence'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50">
+        Výpadek lékaře
+      </button>
+      <div class="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-xs text-slate-500">
+        <span>Přihlášen: <strong>Věra Kovářová (Recepce)</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HLAVNÍ PLOCHA ================= -->
+  <main class="flex-1 py-6 sm:py-8">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+      <div id="api-error-banner" class="hidden rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs font-semibold text-rose-800"></div>
+
+      <!-- ================= 1. TAB: DIÁŘ & KALENDÁŘ ================= -->
+      <section id="tab-calendar" class="space-y-6">
+        
+        <!-- Ovládací lišta: Lékař, Den, Kapacita -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-wrap items-center justify-between gap-4">
+          
+          <!-- Výběr lékaře -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold text-slate-700">Lékař:</span>
+            <select id="doctor-picker-select" onchange="changeDoctor(this.value)" class="rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:outline-none"></select>
+            <span id="doctor-status-badge" class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+              ● Ordinuje
+            </span>
+          </div>
+
+          <!-- Přepínač pohledu + posun dnů / týdnů -->
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex rounded-xl border border-slate-300 bg-slate-50 p-0.5" role="group" aria-label="Pohled">
+              <button id="view-day-btn" onclick="setView('day')" class="rounded-lg px-3 py-1 text-xs font-bold">Den</button>
+              <button id="view-week-btn" onclick="setView('week')" class="rounded-lg px-3 py-1 text-xs font-bold">Týden</button>
+            </div>
+            <button onclick="changeDay(-1)" title="Předchozí" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition">◀</button>
+            <span class="text-xs font-bold text-slate-900 px-3 py-1.5 bg-slate-100 rounded-xl border border-slate-200" id="current-date-label">–</span>
+            <button onclick="changeDay(1)" title="Následující" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition">▶</button>
+            <button onclick="setTodayDate()" class="rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-2.5 py-1.5 text-[11px] font-bold text-indigo-700 transition">Dnes</button>
+          </div>
+
+          <!-- Přehled kapacity -->
+          <div class="flex items-center gap-2.5 text-xs">
+            <span class="text-slate-500 font-medium">Kapacita:</span>
+            <span class="font-bold text-slate-900" id="calendar-capacity-counter">–</span>
+            <span class="rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 font-bold" id="calendar-free-counter">–</span>
+          </div>
+        </div>
+
+        <!-- Upozornění na ordinační dobu -->
+        <div class="rounded-xl bg-amber-50/90 border border-amber-200 p-4 flex items-start gap-3 text-xs text-amber-950">
+          <span class="font-bold text-amber-700">Pravidlo:</span>
+          <div id="calendar-rule-text">
+            Rezervaci nelze založit mimo platné ordinační hodiny.
+          </div>
+        </div>
+
+        <!-- Mřížka slotů po 15 min -->
+        <div class="overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+          <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700" id="calendar-grid-title">Denní harmonogram termínů (Mřížka po 15 minutách)</h3>
+              <p class="text-[11px] text-slate-500 mt-0.5">Zákaz kolize: Systém nikdy nedovolí dvě rezervace na stejný čas u jednoho lékaře</p>
+            </div>
+            <button onclick="openBookingModal()" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 shadow-sm">
+              + Zapsat pacienta
+            </button>
+          </div>
+          <ul role="list" class="divide-y divide-slate-100" id="calendar-slots-list">
+            <!-- Dynamické řádky slotů -->
+          </ul>
+          <div id="calendar-week-view" class="hidden overflow-x-auto"></div>
+        </div>
+      </section>
+
+      <!-- ================= 2. TAB: KARTOTÉKA PACIENTŮ ================= -->
+      <section id="tab-patients" class="hidden space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex-1 max-w-md relative">
+            <input 
+              type="text" 
+              id="patient-search-input"
+              oninput="handleSearch(this.value)"
+              placeholder="Hledat pacienta podle příjmení, telefonu nebo RČ..." 
+              class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 pl-9 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+            >
+            <svg class="pointer-events-none absolute left-3 top-2.5 size-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <button onclick="openNewPatientModal()" class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700">
+            + Založit kartu pacienta
+          </button>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[11px] tracking-wider">
+              <tr>
+                <th scope="col" class="py-3.5 pl-6 pr-3">Jméno pacienta</th>
+                <th scope="col" class="px-3 py-3.5">Rok nar.</th>
+                <th scope="col" class="px-3 py-3.5">Číslo pojištěnce (RČ)</th>
+                <th scope="col" class="px-3 py-3.5">Pojišťovna</th>
+                <th scope="col" class="px-3 py-3.5">Telefon</th>
+                <th scope="col" class="px-3 py-3.5">Spolehlivost / Rušení</th>
+                <th scope="col" class="py-3.5 pr-6 pl-3 text-right">Akce</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white" id="patients-table-rows">
+              <!-- Dynamické řádky pacientů -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= 3. TAB: ODBAVENÍ & VÝKONY ================= -->
+      <section id="tab-visit" class="hidden space-y-6">
+        <div class="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-sm space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <h2 class="text-base font-bold text-slate-900">Záznam o uskutečněné návštěvě a vykazování výkonů</h2>
+            <p class="mt-1 text-xs text-slate-500">Pravidlo: Výkon nelze zapsat k návštěvě, která se neuskutečnila · Realizace M:N vazby Návštěva ↔ Výkon</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Vyberte rezervaci k odbavení:</label>
+              <select id="visit-appointment-picker" onchange="syncVisitForm()" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
+                <!-- JS -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Lékařská zpráva ošetřujícího lékaře:</label>
+              <input type="text" id="visit-doctor-note" placeholder="např. TK 120/80, doporučen klidový režim..." class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Provedené zdravotní výkony (Číselník VZP)</span>
+              <button onclick="addProcedureToActiveVisit()" class="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100">
+                + Přidat další výkon
+              </button>
+            </div>
+
+            <div class="overflow-hidden rounded-xl border border-slate-200">
+              <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                <thead class="bg-slate-50 font-bold text-slate-700">
+                  <tr>
+                    <th class="py-2.5 pl-4 pr-3">Kód a název výkonu</th>
+                    <th class="px-3 py-2.5 w-24">Počet</th>
+                    <th class="px-3 py-2.5 text-right w-28">Body / ks</th>
+                    <th class="px-3 py-2.5 text-right w-28">Celkem bodů</th>
+                    <th class="py-2.5 pr-4 pl-3 text-center w-12">Smazat</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white" id="visit-procedures-rows">
+                  <!-- Řádky výkonů -->
+                </tbody>
+                <tfoot class="bg-slate-50 font-bold text-slate-900 border-t border-slate-200">
+                  <tr>
+                    <td colspan="3" class="py-2.5 pl-4 pr-3 text-right text-slate-600">Celkem bodů za návštěvu:</td>
+                    <td id="visit-sum-points" class="px-3 py-2.5 text-right text-indigo-700 font-mono text-sm">0 b.</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+              <span id="visit-saved-state" class="text-[11px] font-bold"></span>
+              <button onclick="saveActiveVisit()" class="rounded-lg bg-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700">
+                ✓ Uložit návštěvu a zapsat body do výkazu
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. TAB: MĚSÍČNÍ VÝKAZY ================= -->
+      <section id="tab-billing" class="hidden space-y-6">
+        <div class="sm:flex sm:items-center sm:justify-between border-b border-slate-200 pb-5">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Měsíční výkaz provedených výkonů a bodů</h2>
+            <p class="mt-1 text-xs text-slate-500">Počítáno automaticky z uložených návštěv · za vybraného lékaře a kalendářní měsíc</p>
+          </div>
+          <div class="mt-4 sm:mt-0 flex flex-wrap gap-2">
+            <select id="billing-doctor-select" onchange="renderBilling()" class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-900">
+              <option value="">Všichni lékaři</option>
+            </select>
+            <select id="billing-month-select" onchange="renderBilling()" class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-900"></select>
+            <button onclick="exportBillingBatch()" class="rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-slate-800">
+              Export podkladů (CSV)
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+          <dl class="mx-auto grid grid-cols-1 gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Vykázané body celkem</dt>
+              <dd id="billing-total-points" class="mt-2 text-2xl font-black text-indigo-700">0 b.</dd>
+            </div>
+            <div class="bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Ošetření pacienti</dt>
+              <dd id="billing-patients" class="mt-2 text-2xl font-black text-slate-900">0</dd>
+            </div>
+            <div class="bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Uložené návštěvy</dt>
+              <dd id="billing-visits" class="mt-2 text-2xl font-black text-emerald-700">0</dd>
+            </div>
+            <div class="bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Zrušeno / Nedošli</dt>
+              <dd id="billing-stornos" class="mt-2 text-2xl font-black text-rose-700">0</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead class="bg-slate-50 font-bold text-slate-700">
+              <tr>
+                <th class="py-3.5 pl-6 pr-3">Pojišťovna</th>
+                <th class="px-3 py-3.5">Kód</th>
+                <th class="px-3 py-3.5">Název výkonu</th>
+                <th class="px-3 py-3.5 text-center">Frekvence</th>
+                <th class="px-3 py-3.5 text-right">Body/ks</th>
+                <th class="py-3.5 pr-6 pl-3 text-right">Celkem</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white" id="billing-table-rows"></tbody>
+            <tfoot class="bg-slate-50 font-bold text-slate-900 border-t border-slate-200">
+              <tr>
+                <td colspan="5" class="py-3 pl-6 pr-3 text-right text-slate-600">Celkem za období:</td>
+                <td id="billing-table-total" class="py-3 pr-6 pl-3 text-right font-mono text-indigo-700">0 b.</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= 5. TAB: VÝPADEK LÉKAŘE ================= -->
+      <section id="tab-absence" class="hidden space-y-6">
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="size-9 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center text-sm">!</div>
+            <div>
+              <h3 class="text-sm font-bold text-rose-950">Mimořádný stav: Nemoc / nepřítomnost lékaře</h3>
+              <p class="text-xs text-rose-800 mt-0.5">Zaevidujte nepřítomnost – diář lékaře se v daný den zablokuje a níže se zobrazí pacienti k obvolání a přeplánování.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label class="block text-xs font-bold text-rose-900 mb-1">Lékař:</label>
+              <select id="absence-doctor-select" class="rounded-xl bg-white border border-rose-300 px-3 py-2 text-xs font-bold text-slate-900"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-rose-900 mb-1">Den:</label>
+              <input type="date" id="absence-date-input" class="rounded-xl bg-white border border-rose-300 px-3 py-2 text-xs font-mono font-bold text-slate-900">
+            </div>
+            <button onclick="addAbsence()" class="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700">Označit nepřítomnost</button>
+          </div>
+          <div id="absence-list" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead class="bg-slate-50 font-bold text-slate-700">
+              <tr>
+                <th class="py-3.5 pl-6 pr-3">Termín</th>
+                <th class="px-3 py-3.5">Lékař</th>
+                <th class="px-3 py-3.5">Pacient</th>
+                <th class="px-3 py-3.5">Telefon</th>
+                <th class="px-3 py-3.5">Důvod</th>
+                <th class="px-3 py-3.5">Stav</th>
+                <th class="py-3.5 pr-6 pl-3 text-right">Akce</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white" id="sick-table-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= IN-APP MODÁLNÍ OZNÁMENÍ (NÁHRADA ZA BROWSER ALERT) ================= -->
+  <div id="app-alert-modal" class="fixed inset-0 hidden" style="z-index: 70;" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-200"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-6 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 border border-slate-200">
+          
+          <div class="sm:flex sm:items-start gap-4">
+            <!-- Dynamická ikonka -->
+            <div id="modal-alert-icon-box" class="mx-auto flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 sm:mx-0">
+              <span id="modal-alert-icon-symbol" class="font-bold text-lg">✓</span>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:text-left flex-1">
+              <h3 class="text-sm font-bold text-slate-900" id="modal-alert-title">Oznámení</h3>
+              <div class="mt-1.5">
+                <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line" id="modal-alert-message">Popis hlášení...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 sm:flex sm:flex-row-reverse">
+            <button type="button" onclick="closeAppAlertModal()" id="modal-alert-confirm-btn" class="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 sm:w-auto sm:min-w-24">
+              Rozumím
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PLOVOUCÍ RYCHLÁ TOAST NOTIFIKACE ================= -->
+  <div id="app-toast" style="z-index: 80;" class="fixed bottom-6 right-6 transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300 ease-out max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200/90 p-4 flex items-center gap-3">
+    <div id="toast-icon-box" class="size-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+      ✓
+    </div>
+    <div class="flex-1 min-w-0">
+      <h4 id="toast-title" class="text-xs font-bold text-slate-900 truncate">Úspěch</h4>
+      <p id="toast-message" class="text-[11px] text-slate-500 truncate">Akce byla úspěšná</p>
+    </div>
+    <button onclick="hideToast()" class="text-slate-400 hover:text-slate-600 font-bold text-lg leading-none">&times;</button>
+  </div>
+
+  <!-- ================= MODÁL NOVÉ REZERVACE ================= -->
+  <div id="booking-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 border border-slate-200">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900" id="booking-modal-title">Založit novou rezervaci termínu</h3>
+            <button onclick="closeBookingModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl leading-none">&times;</button>
+          </div>
+
+          <div class="space-y-4">
+            <div id="modal-reschedule-info" class="hidden rounded-xl bg-indigo-50 p-3 text-xs font-semibold text-indigo-800 border border-indigo-200"></div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Ošetřující lékař:</label>
+              <select id="modal-doctor" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-900"></select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Vyberte pacienta:</label>
+              <div class="flex gap-2">
+                <select id="modal-patient-picker" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
+                  <!-- JS -->
+                </select>
+                <button type="button" onclick="openNewPatientModal()" class="shrink-0 rounded-xl bg-slate-100 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200">
+                  + Nový
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Datum:</label>
+                <input type="date" id="modal-date-input" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono font-bold text-slate-900">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Čas začátku:</label>
+                <input type="time" id="modal-time-input" value="" step="900" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono font-bold text-slate-900">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Délka slotu:</label>
+                <select id="modal-duration-input" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
+                  <option value="15">15 min (Běžná kontrola)</option>
+                  <option value="30">30 min (Komplexní vyšetření)</option>
+                  <option value="45">45 min (Vstupní prohlídka)</option>
+                  <option value="60">60 min (Zákrok)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Důvod návštěvy (poznámka recepce):</label>
+              <input type="text" id="modal-reason-input" placeholder="např. Bolest kolene, kontrola po lécích..." class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
+            </div>
+
+            <div id="modal-conflict-alert" class="hidden rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700 border border-rose-200"></div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-2.5">
+            <button type="button" onclick="closeBookingModal()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+              Zrušit
+            </button>
+            <button type="button" onclick="confirmNewBooking()" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700">
+              Zapsat termín do diáře
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODÁL SPRÁVY REZERVACE ================= -->
+  <div id="detail-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 border border-slate-200">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900">Správa rezervace</h3>
+            <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl leading-none">&times;</button>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Lékař:</span>
+              <span class="font-bold text-slate-900" id="detail-doctor-name">-</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Pacient:</span>
+              <span class="font-bold text-slate-900" id="detail-patient-name">-</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Telefonní kontakt:</span>
+              <span class="font-mono font-bold text-indigo-700" id="detail-patient-phone">-</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Čas rezervace:</span>
+              <span class="font-bold text-slate-800" id="detail-slot-time">-</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Důvod:</span>
+              <span class="text-slate-700 italic text-right" id="detail-reason-text">-</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Stav:</span>
+              <span class="font-bold text-slate-800" id="detail-status-text">-</span>
+            </div>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Index spolehlivosti:</span>
+              <span id="detail-cancellation-badge" class="font-bold">-</span>
+            </div>
+          </div>
+
+          <div class="mt-6 space-y-2">
+            <p id="detail-future-hint" class="hidden rounded-xl bg-slate-50 border border-slate-200 p-2.5 text-[11px] text-slate-600">Příchod ani absenci nelze zaznamenat u termínu, který teprve proběhne.</p>
+            <button type="button" id="detail-btn-arrived" onclick="startVisitFromModal()" class="w-full py-2.5 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-indigo-700">
+              Pacient dorazil (Zahájit ošetření)
+            </button>
+            <button type="button" id="detail-btn-visit" onclick="openVisitFromDetail()" class="w-full py-2.5 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-indigo-700">
+              Otevřít záznam návštěvy a výkony
+            </button>
+            <button type="button" id="detail-btn-reschedule" onclick="rescheduleFromDetail()" class="w-full py-2.5 rounded-xl bg-white px-3 text-xs font-bold text-slate-700 border border-slate-300 hover:bg-slate-50">
+              Přeplánovat na jiný termín
+            </button>
+            <button type="button" id="detail-btn-cancel" onclick="cancelBookingAction()" class="w-full py-2.5 rounded-xl bg-rose-50 px-3 text-xs font-bold text-rose-700 border border-rose-200 hover:bg-rose-100">
+              Pacient se omluvil (Zrušit a uvolnit slot)
+            </button>
+            <button type="button" id="detail-btn-noshow" onclick="noShowAction()" class="w-full py-2.5 rounded-xl bg-white px-3 text-xs font-bold text-rose-700 border border-rose-300 hover:bg-rose-50">
+              Nedostavil se bez omluvy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODÁL ZALOŽENÍ PACIENTA ================= -->
+  <div id="patient-modal" class="fixed inset-0 hidden" style="z-index: 60;" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 border border-slate-200">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900">Založit nového pacienta do kartotéky</h3>
+            <button onclick="closeNewPatientModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl leading-none">&times;</button>
+          </div>
+
+          <div class="space-y-3.5 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Jméno:</label>
+              <input type="text" id="np-first-name" placeholder="např. Marie" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Příjmení:</label>
+              <input type="text" id="np-last-name" placeholder="např. Krátká" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="col-span-2">
+                <label class="block font-bold text-slate-700 mb-1">Číslo pojištěnce (RČ – unikátní klíč):</label>
+                <input type="text" id="np-insurance-id" oninput="suggestBirthYear()" placeholder="např. 545812/0316" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Rok narození:</label>
+                <input type="number" id="np-birth-year" min="1900" max="2100" placeholder="1954" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Pojišťovna:</label>
+                <select id="np-insurance-code" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-900">
+                  <option value="111">111 (VZP)</option>
+                  <option value="205">205 (ČPZP)</option>
+                  <option value="211">211 (ZPMV)</option>
+                  <option value="201">201 (VoZP)</option>
+                  <option value="207">207 (OZP)</option>
+                  <option value="209">209 (ZPŠ)</option>
+                  <option value="213">213 (RBP)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Telefon:</label>
+                <input type="text" id="np-phone" placeholder="721 849 102" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900">
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-2.5">
+            <button type="button" onclick="closeNewPatientModal()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+              Zavřít
+            </button>
+            <button type="button" onclick="savePatientCard()" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700">
+              Uložit kartu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT APLIKAČNÍ LOGIKA ================= -->
+  <script>
+    // =====================================================================
+    // Webové rozhraní recepce. Veškerá obchodní pravidla a data jsou na serveru
+    // (REST API /api). Tady se data jen načítají, zobrazují a odesílají.
+    // =====================================================================
+
+    // ---------- 0. POMOCNÉ FUNKCE ----------
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function digitsOnly(value) { return String(value ?? '').replace(/\D/g, ''); }
+
+    const CZ_DAYS = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+    const CZ_DAYS_SHORT = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+    const CZ_MONTHS = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+    const CZ_MONTHS_NOM = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+    const SLOT_MINUTES = 15;
+    const INSURANCE_NAMES = { '111': 'VZP', '201': 'VoZP', '205': 'ČPZP', '207': 'OZP', '209': 'ZPŠ', '211': 'ZPMV', '213': 'RBP' };
+
+    function formatDateCZ(d) { return `${CZ_DAYS[d.getDay()]}, ${d.getDate()}. ${CZ_MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
+    function formatDateShortCZ(iso) { const d = parseISODate(iso); return `${CZ_DAYS_SHORT[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}.`; }
+    function formatDateISO(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function parseISODate(iso) { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); }
+    function addDays(d, n) { const r = new Date(d.getFullYear(), d.getMonth(), d.getDate()); r.setDate(r.getDate() + n); return r; }
+    function mondayOf(d) { return addDays(d, d.getDay() === 0 ? -6 : 1 - d.getDay()); }
+    function timeToMinutes(t) { const m = /^(\d{1,2}):(\d{2})$/.exec(String(t ?? '').trim()); return m ? Number(m[1]) * 60 + Number(m[2]) : null; }
+    function minutesToTime(mins) { return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`; }
+    function patientName(p) { return p ? `${p.lastName} ${p.firstName}` : 'Neznámý pacient'; }
+    function todayDate() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+    const TODAY = todayDate();
+
+    // ---------- 1. OZNÁMENÍ ----------
+    function showAppAlert(title, message, type = 'success') {
+      document.getElementById('modal-alert-title').textContent = title;
+      document.getElementById('modal-alert-message').textContent = message;
+      const v = {
+        error:   { box: 'bg-rose-100 text-rose-700',       icon: '✕', btn: 'bg-rose-600 hover:bg-rose-700' },
+        warning: { box: 'bg-amber-100 text-amber-800',     icon: '!', btn: 'bg-amber-600 hover:bg-amber-700' },
+        info:    { box: 'bg-indigo-100 text-indigo-700',   icon: 'i', btn: 'bg-indigo-600 hover:bg-indigo-700' },
+        success: { box: 'bg-emerald-100 text-emerald-700', icon: '✓', btn: 'bg-indigo-600 hover:bg-indigo-700' }
+      }[type] || {};
+      document.getElementById('modal-alert-icon-box').className = "mx-auto flex size-11 shrink-0 items-center justify-center rounded-xl sm:mx-0 " + v.box;
+      document.getElementById('modal-alert-icon-symbol').textContent = v.icon;
+      document.getElementById('modal-alert-confirm-btn').className = "inline-flex w-full justify-center rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm sm:w-auto sm:min-w-24 " + v.btn;
+      document.getElementById('app-alert-modal').classList.remove('hidden');
+    }
+    function closeAppAlertModal() { document.getElementById('app-alert-modal').classList.add('hidden'); }
+
+    let toastTimeout = null;
+    function showToast(title, message, type = 'success') {
+      const toast = document.getElementById('app-toast');
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-message').textContent = message;
+      const iconBox = document.getElementById('toast-icon-box');
+      iconBox.className = "size-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 " +
+        (type === 'info' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700');
+      iconBox.textContent = type === 'info' ? 'i' : '✓';
+      toast.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(hideToast, 3500);
+    }
+    function hideToast() {
+      const toast = document.getElementById('app-toast');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+    }
+    window.alert = msg => showAppAlert("Oznámení systému", msg, "info");
+
+    // ---------- 2. KOMUNIKACE SE SERVEREM ----------
+    class ApiError extends Error {}
+
+    async function api(path, { method = 'GET', body } = {}) {
+      let res;
+      try {
+        res = await fetch(path, {
+          method,
+          headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+          body: body !== undefined ? JSON.stringify(body) : undefined
+        });
+      } catch (e) {
+        showApiBanner('Nelze se spojit se serverem. Zkontrolujte, že aplikace běží (docker compose up).');
+        throw new ApiError('Server není dostupný.');
+      }
+      hideApiBanner();
+      if (res.status === 204) return null;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new ApiError(data.detail || `Chyba serveru (${res.status}).`);
+      return data;
+    }
+    function showApiBanner(msg) { const b = document.getElementById('api-error-banner'); b.textContent = msg; b.classList.remove('hidden'); }
+    function hideApiBanner() { document.getElementById('api-error-banner').classList.add('hidden'); }
+
+    // Lokální kopie dat pro vykreslování (zdroj pravdy je databáze na serveru)
+    const db = {
+      activeDoctorId: null,
+      currentDate: (TODAY.getDay() === 0 || TODAY.getDay() === 6) ? mondayOf(addDays(TODAY, 2)) : new Date(TODAY),
+      view: 'day',
+      doctors: [], schedules: [], patients: [], procedures: [], appointments: [], absences: [],
+      activeDetailApp: null, visitDraft: null, rescheduleFromId: null
+    };
+
+    const mapPatient = p => ({ id: p.id, firstName: p.first_name, lastName: p.last_name, birthYear: p.birth_year,
+      insuranceId: p.insurance_id, insuranceCode: p.insurance_code, phone: p.phone || 'Neuvedeno',
+      cancellations: p.cancellations, noShows: p.no_shows, unreliable: p.unreliable });
+    const mapAppointment = a => ({ id: a.id, doctorId: a.doctor_id, patientId: a.patient_id, date: a.date, time: a.time,
+      duration: a.duration, status: a.status, reason: a.reason, callStatus: a.patient_called ? 'CALLED' : null,
+      rescheduledToId: a.rescheduled_to_id, hasVisit: a.has_visit });
+
+    async function loadAll() {
+      const [doctors, procedures, patients, appointments, absences] = await Promise.all([
+        api('/api/doctors'), api('/api/procedures'), api('/api/patients'), api('/api/appointments'), api('/api/absences')
+      ]);
+      db.doctors = doctors.map(d => ({ id: d.id, name: d.name, role: d.specialization }));
+      // API: 0 = pondělí; JS Date.getDay(): 0 = neděle
+      db.schedules = doctors.flatMap(d => d.schedules.map(s => ({
+        doctorId: d.id, dayOfWeek: (s.day_of_week + 1) % 7, start: s.start, end: s.end, location: s.location, external: s.external })));
+      db.procedures = procedures;
+      db.patients = patients.map(mapPatient);
+      db.appointments = appointments.map(mapAppointment);
+      db.absences = absences.map(a => ({ id: a.id, doctorId: a.doctor_id, date: a.date }));
+      if (!db.activeDoctorId && db.doctors.length) db.activeDoctorId = db.doctors[0].id;
+      fillDoctorSelects();
+    }
+
+    function fillDoctorSelects() {
+      const opts = withRole => db.doctors.map(d => `<option value="${d.id}">${escapeHtml(d.name)}${withRole ? ' (' + escapeHtml(d.role) + ')' : ''}</option>`).join('');
+      for (const [id, withRole, prefix] of [['doctor-picker-select', true, ''], ['modal-doctor', true, ''],
+                                            ['absence-doctor-select', false, ''], ['billing-doctor-select', false, '<option value="">Všichni lékaři</option>']]) {
+        const el = document.getElementById(id);
+        const keep = el.value;
+        el.innerHTML = prefix + opts(withRole);
+        if (keep && [...el.options].some(o => o.value === keep)) el.value = keep;
+      }
+    }
+
+    // Spustí akci, při chybě ukáže hlášku ze serveru
+    async function run(action, errorTitle = 'Akci nelze provést') {
+      try { return await action(); }
+      catch (e) { showAppAlert(errorTitle, e.message, 'error'); return undefined; }
+    }
+
+    // ---------- 3. POMOCNÉ DOTAZY NAD NAČTENÝMI DATY (jen pro zobrazení) ----------
+    const ACTIVE_STATUSES = ['PLANNED', 'COMPLETED'];
+    function getDoctor(id) { return db.doctors.find(d => d.id === id); }
+    function getPatient(id) { return db.patients.find(p => p.id === id); }
+    function getSchedulesFor(doctorId, date) {
+      return db.schedules.filter(s => s.doctorId === doctorId && s.dayOfWeek === date.getDay())
+        .sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+    }
+    function isDoctorAbsent(doctorId, isoDate) { return db.absences.some(a => a.doctorId === doctorId && a.date === isoDate); }
+    function describeDoctorHours(doctorId) {
+      const byDay = {};
+      db.schedules.filter(s => s.doctorId === doctorId).forEach(s => {
+        (byDay[s.dayOfWeek] = byDay[s.dayOfWeek] || []).push(s.external ? `${s.start}–${s.end} externě` : `${s.start}–${s.end}`);
+      });
+      return [1, 2, 3, 4, 5, 6, 0].filter(d => byDay[d]).map(d => `${CZ_DAYS_SHORT[d]} ${byDay[d].join(', ')}`).join(' · ');
+    }
+
+    // ---------- 4. NAVIGACE ----------
+    const TABS = ['calendar', 'patients', 'visit', 'billing', 'absence'];
+    function tabButtonClass(tab, active, mobile) {
+      const size = mobile ? "w-full text-left px-3 py-2.5 rounded-lg text-xs " : "whitespace-nowrap px-3 py-2 rounded-lg text-xs transition ";
+      if (tab === 'absence') return size + (active ? "font-bold text-rose-800 bg-rose-100 border border-rose-300" : "font-bold text-rose-700 bg-rose-50/70 hover:bg-rose-100 border border-rose-200");
+      return size + (active ? "font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80" : "font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent");
+    }
+    function switchTab(tabId, options = {}) {
+      TABS.forEach(t => {
+        const active = t === tabId;
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', !active);
+        const btn = document.getElementById(`tab-${t}-btn`); if (btn) btn.className = tabButtonClass(t, active, false);
+        const mbtn = document.getElementById(`mtab-${t}-btn`); if (mbtn) mbtn.className = tabButtonClass(t, active, true);
+      });
+      if (tabId === 'calendar') renderCalendar();
+      if (tabId === 'patients') handleSearch(document.getElementById('patient-search-input').value);
+      if (tabId === 'visit') populateVisitPicker(options.appointmentId);
+      if (tabId === 'billing') renderBilling();
+      if (tabId === 'absence') renderSickList();
+    }
+    function currentTab() { return TABS.find(t => !document.getElementById(`tab-${t}`).classList.contains('hidden')); }
+    function toggleMobileNav() { document.getElementById('mobile-nav-menu').classList.toggle('hidden'); }
+
+    function changeDay(delta) {
+      db.currentDate = addDays(db.currentDate, db.view === 'week' ? delta * 7 : delta);
+      renderCalendar();
+    }
+    function setTodayDate() {
+      db.currentDate = new Date(TODAY);
+      renderCalendar();
+      showToast("Dnešní den", formatDateCZ(db.currentDate), "info");
+    }
+    function changeDoctor(id) { db.activeDoctorId = parseInt(id, 10); renderCalendar(); }
+    function setView(view) {
+      db.view = view;
+      const on = "rounded-lg px-3 py-1 text-xs font-bold bg-white text-indigo-700 shadow-sm border border-slate-200";
+      const off = "rounded-lg px-3 py-1 text-xs font-bold text-slate-600 hover:text-slate-900";
+      document.getElementById('view-day-btn').className = view === 'day' ? on : off;
+      document.getElementById('view-week-btn').className = view === 'week' ? on : off;
+      renderCalendar();
+    }
+
+    // ---------- 5. DIÁŘ: DENNÍ POHLED ----------
+    function setDoctorStatusBadge(text, tone) {
+      const tones = { ok: 'bg-emerald-50 text-emerald-800 border-emerald-200', off: 'bg-slate-100 text-slate-600 border-slate-200', sick: 'bg-rose-50 text-rose-800 border-rose-200' };
+      const badge = document.getElementById('doctor-status-badge');
+      badge.className = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border " + tones[tone];
+      badge.textContent = text;
+    }
+    function setCapacity(booked, total, freeText) {
+      document.getElementById('calendar-capacity-counter').textContent = `${booked} / ${total} slotů`;
+      document.getElementById('calendar-free-counter').textContent = freeText;
+    }
+
+    function renderCalendar() {
+      if (!db.doctors.length) return;
+      document.getElementById('doctor-picker-select').value = db.activeDoctorId;
+      const doctor = getDoctor(db.activeDoctorId);
+      document.getElementById('calendar-rule-text').textContent =
+        `${doctor.name} – ordinační hodiny: ${describeDoctorHours(doctor.id)}. Rezervaci nelze založit mimo ordinační hodiny ani na externím pracovišti.`;
+
+      const dayList = document.getElementById('calendar-slots-list');
+      const weekView = document.getElementById('calendar-week-view');
+      dayList.classList.toggle('hidden', db.view !== 'day');
+      weekView.classList.toggle('hidden', db.view !== 'week');
+      if (db.view === 'week') { renderWeek(); return; }
+
+      document.getElementById('calendar-grid-title').textContent = 'Denní harmonogram termínů (Mřížka po 15 minutách)';
+      document.getElementById('current-date-label').textContent = formatDateCZ(db.currentDate);
+      dayList.innerHTML = '';
+      const isoDate = formatDateISO(db.currentDate);
+      const dayOfWeek = db.currentDate.getDay();
+      const schedules = getSchedulesFor(db.activeDoctorId, db.currentDate);
+      const absent = isDoctorAbsent(db.activeDoctorId, isoDate);
+
+      const emptyState = (title, text) => {
+        dayList.innerHTML = `<li class="py-12 px-6 text-center text-slate-500">
+            <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400 font-bold">i</div>
+            <p class="font-bold text-slate-800">${escapeHtml(title)}</p><p class="text-xs text-slate-500 mt-1">${escapeHtml(text)}</p></li>`;
+      };
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        setDoctorStatusBadge('Víkend', 'off'); emptyState("Ordinace je o víkendu uzavřena", "Použijte šipky ◀ / ▶ pro přepnutí na ordinační den.");
+        setCapacity(0, 0, 'Víkend (zavřeno)'); return;
+      }
+      if (schedules.length === 0) {
+        setDoctorStatusBadge('Dnes neordinuje', 'off'); emptyState(`${doctor.name} v tento den neordinuje`, `Ordinační hodiny: ${describeDoctorHours(doctor.id)}.`);
+        setCapacity(0, 0, 'Neordinuje'); return;
+      }
+      setDoctorStatusBadge(absent ? '● Nepřítomen (výpadek)' : '● Ordinuje', absent ? 'sick' : 'ok');
+
+      const dayApps = db.appointments.filter(a => a.doctorId === db.activeDoctorId && a.date === isoDate && ACTIVE_STATUSES.includes(a.status));
+      let booked = 0, available = 0;
+
+      schedules.forEach(s => {
+        for (let slotStart = timeToMinutes(s.start); slotStart < timeToMinutes(s.end); slotStart += SLOT_MINUTES) {
+          const time = minutesToTime(slotStart);
+          const li = document.createElement('li');
+          li.className = "flex items-center justify-between gap-x-6 py-3.5 px-6 hover:bg-slate-50/80 transition";
+
+          if (s.external) {
+            li.innerHTML = `<div class="flex items-center gap-x-4"><span class="font-mono text-xs text-slate-400 w-14">${time}</span>
+                <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">${escapeHtml(s.location)} (nelze objednat)</span></div>
+              <button disabled class="rounded-lg bg-slate-100 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-400 cursor-not-allowed">Blokováno</button>`;
+            dayList.appendChild(li); continue;
+          }
+          available++;
+          const startingApp = dayApps.find(a => timeToMinutes(a.time) === slotStart);
+          const ongoingApp = !startingApp && dayApps.find(a => { const st = timeToMinutes(a.time); return st < slotStart && slotStart < st + a.duration; });
+
+          if (startingApp) {
+            booked++;
+            const patient = getPatient(startingApp.patientId);
+            const isDone = startingApp.status === 'COMPLETED';
+            const endTime = minutesToTime(slotStart + startingApp.duration);
+            li.innerHTML = `<div class="min-w-0 flex items-center gap-x-4"><span class="font-mono text-xs font-bold text-slate-900 w-14">${time}</span>
+                <div class="min-w-0"><div class="flex items-center gap-x-2.5 flex-wrap">
+                  <p class="text-xs font-bold text-slate-900">${escapeHtml(patientName(patient))}</p>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${isDone ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-indigo-50 text-indigo-800 border border-indigo-200'}">${isDone ? 'Odbaveno · ' : ''}${startingApp.duration} min (${time} – ${endTime})</span>
+                  ${patient && patient.unreliable ? '<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">Rizikový</span>' : ''}
+                  ${absent && !isDone ? '<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">Nutno přeplánovat</span>' : ''}
+                </div>
+                <p class="mt-0.5 text-[11px] text-slate-500 font-medium truncate">${escapeHtml(startingApp.reason)} · tel: <span class="font-mono text-slate-700">${escapeHtml(patient ? patient.phone : '')}</span></p></div></div>
+              <button onclick="openDetailModal(${startingApp.id})" class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">Spravovat</button>`;
+          } else if (ongoingApp) {
+            booked++;
+            const patient = getPatient(ongoingApp.patientId);
+            const endTime = minutesToTime(timeToMinutes(ongoingApp.time) + ongoingApp.duration);
+            li.className = "flex items-center justify-between gap-x-6 py-3 px-6 bg-slate-50/70 border-l-4 border-indigo-400 transition";
+            li.innerHTML = `<div class="min-w-0 flex items-center gap-x-4"><span class="font-mono text-xs font-semibold text-slate-400 w-14">${time}</span>
+                <div class="flex items-center gap-x-2.5 min-w-0"><span class="inline-flex shrink-0 items-center rounded-md bg-slate-200/80 px-2 py-0.5 text-[10px] font-semibold text-slate-600">↳ Pokračování termínu</span>
+                <p class="text-xs text-slate-500 font-medium truncate">Ošetření pacienta <strong class="text-slate-800">${escapeHtml(patientName(patient))}</strong> (${ongoingApp.time} – ${endTime})</p></div></div>
+              <button onclick="openDetailModal(${ongoingApp.id})" class="rounded-lg bg-white border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100">Detail</button>`;
+          } else if (absent) {
+            li.innerHTML = `<div class="flex items-center gap-x-4"><span class="font-mono text-xs text-slate-400 w-14">${time}</span>
+                <span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-800 border border-rose-200">Lékař nepřítomen</span></div>
+              <button disabled class="rounded-lg bg-slate-100 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-400 cursor-not-allowed">Blokováno</button>`;
+          } else if (db.currentDate < TODAY) {
+            li.innerHTML = `<div class="flex items-center gap-x-4"><span class="font-mono text-xs text-slate-400 w-14">${time}</span>
+                <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500 border border-slate-200">Neobsazeno (minulý den)</span></div>`;
+          } else {
+            li.innerHTML = `<div class="flex items-center gap-x-4"><span class="font-mono text-xs font-semibold text-slate-400 w-14">${time}</span>
+                <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">Volný slot (15 min)</span></div>
+              <button onclick="quickBook('${time}')" class="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100">+ Rezervovat</button>`;
+          }
+          dayList.appendChild(li);
+        }
+      });
+      setCapacity(booked, available, absent ? 'Výpadek lékaře' : `${available - booked} volných`);
+    }
+
+    // ---------- 6. DIÁŘ: TÝDENNÍ PŘEHLED VOLNA (počítá server) ----------
+    let weekRequest = 0;
+    async function renderWeek() {
+      const monday = mondayOf(db.currentDate);
+      const friday = addDays(monday, 4);
+      document.getElementById('calendar-grid-title').textContent = 'Týdenní přehled volných termínů';
+      document.getElementById('current-date-label').textContent =
+        `${monday.getDate()}. ${monday.getMonth() + 1}. – ${friday.getDate()}. ${friday.getMonth() + 1}. ${friday.getFullYear()}`;
+      setDoctorStatusBadge('Týdenní přehled', 'ok');
+      const container = document.getElementById('calendar-week-view');
+      const reqId = ++weekRequest;
+      container.innerHTML = '<p class="p-6 text-xs text-slate-400">Načítám…</p>';
+      const days = await run(() => api(`/api/availability?doctor_id=${db.activeDoctorId}&week_of=${formatDateISO(monday)}`));
+      if (!days || reqId !== weekRequest) return;
+
+      const times = [...new Set(days.flatMap(d => d.slots.map(s => s.time)))].sort();
+      const byDay = days.map(d => Object.fromEntries(d.slots.map(s => [s.time, s])));
+      const free = days.reduce((n, d) => n + d.slots.filter(s => s.state === 'FREE').length, 0);
+      const bookable = days.reduce((n, d) => n + d.slots.filter(s => s.state !== 'EXTERNAL').length, 0);
+      const bookedCount = days.reduce((n, d) => n + d.slots.filter(s => s.state === 'BOOKED').length, 0);
+      setCapacity(bookedCount, bookable, `${free} volných v týdnu`);
+
+      if (!times.length) {
+        container.innerHTML = '<p class="p-10 text-center text-sm text-slate-500">Lékař v tomto týdnu neordinuje.</p>';
+        return;
+      }
+      const cell = (day, slot) => {
+        if (!slot) return '<td class="p-1"><div class="h-8 rounded-md bg-slate-50"></div></td>';
+        const base = 'h-8 w-full rounded-md text-[11px] font-semibold flex items-center justify-center px-1 truncate ';
+        if (slot.state === 'FREE') {
+          return `<td class="p-1"><button onclick="quickBook('${slot.time}', '${day.date}')" title="Rezervovat ${slot.time}" class="${base}bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">Volno</button></td>`;
+        }
+        if (slot.state === 'BOOKED') {
+          const a = db.appointments.find(x => x.id === slot.appointment_id);
+          const p = a && getPatient(a.patientId);
+          return `<td class="p-1"><button onclick="openDetailModal(${slot.appointment_id})" class="${base}bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100">${escapeHtml(p ? p.lastName : 'Obsazeno')}</button></td>`;
+        }
+        const labels = { EXTERNAL: ['Externě', 'bg-amber-50 text-amber-800 border border-amber-200'], ABSENT: ['Nepřítomen', 'bg-rose-50 text-rose-700 border border-rose-200'], PAST: ['–', 'bg-slate-50 text-slate-400 border border-slate-100'] };
+        const [label, cls] = labels[slot.state];
+        return `<td class="p-1"><div class="${base}${cls}">${label}</div></td>`;
+      };
+      container.innerHTML = `
+        <table class="min-w-full text-xs">
+          <thead class="bg-slate-50 text-slate-700"><tr>
+            <th class="py-2.5 pl-4 pr-2 text-left w-16">Čas</th>
+            ${days.map(d => `<th class="px-1 py-2.5 text-center font-bold ${d.date === formatDateISO(TODAY) ? 'text-indigo-700' : ''}">${formatDateShortCZ(d.date)}${d.absent ? '<br><span class="text-[10px] text-rose-600">nepřítomen</span>' : (!d.works ? '<br><span class="text-[10px] font-medium text-slate-400">neordinuje</span>' : '')}</th>`).join('')}
+          </tr></thead>
+          <tbody>${times.map(t => `<tr><td class="pl-4 pr-2 font-mono text-slate-500">${t}</td>${days.map((d, i) => cell(d, byDay[i][t])).join('')}</tr>`).join('')}</tbody>
+        </table>
+        <p class="px-4 py-3 text-[11px] text-slate-500">Klikněte na „Volno“ pro rezervaci, na jméno pro správu termínu.</p>`;
+    }
+
+    function quickBook(time, isoDate) {
+      openBookingModal({ time, doctorId: db.activeDoctorId, isoDate: isoDate || formatDateISO(db.currentDate) });
+    }
+
+    // ---------- 7. NOVÁ REZERVACE ----------
+    function fillPatientPicker(selectedId) {
+      const select = document.getElementById('modal-patient-picker');
+      select.innerHTML = '';
+      db.patients.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.lastName} ${p.firstName}, nar. ${p.birthYear} (tel: ${p.phone}, RČ: ${p.insuranceId})`;
+        select.appendChild(opt);
+      });
+      if (selectedId) select.value = selectedId;
+    }
+
+    function openBookingModal(options = {}) {
+      db.rescheduleFromId = options.rescheduleFromId || null;
+      fillPatientPicker(options.patientId);
+      document.getElementById('modal-doctor').value = options.doctorId || db.activeDoctorId;
+      const defaultDate = db.currentDate < TODAY ? TODAY : db.currentDate;
+      document.getElementById('modal-date-input').value = options.isoDate || formatDateISO(defaultDate);
+      document.getElementById('modal-date-input').min = formatDateISO(TODAY);
+      document.getElementById('modal-time-input').value = options.time || '';
+      document.getElementById('modal-duration-input').value = String(options.duration || 15);
+      document.getElementById('modal-reason-input').value = options.reason || '';
+      document.getElementById('modal-conflict-alert').classList.add('hidden');
+
+      const info = document.getElementById('modal-reschedule-info');
+      if (db.rescheduleFromId) {
+        const orig = db.appointments.find(a => a.id === db.rescheduleFromId);
+        info.textContent = `Přeplánování termínu ${formatDateShortCZ(orig.date)} ${orig.time} (${getDoctor(orig.doctorId).name}). Po uložení nového termínu bude původní automaticky zrušen.`;
+        info.classList.remove('hidden');
+        document.getElementById('booking-modal-title').textContent = 'Přeplánovat termín';
+      } else {
+        info.classList.add('hidden');
+        document.getElementById('booking-modal-title').textContent = 'Založit novou rezervaci termínu';
+      }
+      document.getElementById('booking-modal').classList.remove('hidden');
+    }
+    function closeBookingModal() { document.getElementById('booking-modal').classList.add('hidden'); db.rescheduleFromId = null; }
+
+    let bookingInFlight = false;
+    async function confirmNewBooking() {
+      if (bookingInFlight) return;
+      const payload = {
+        doctor_id: parseInt(document.getElementById('modal-doctor').value, 10),
+        patient_id: parseInt(document.getElementById('modal-patient-picker').value, 10),
+        date: document.getElementById('modal-date-input').value,
+        time: document.getElementById('modal-time-input').value,
+        duration: parseInt(document.getElementById('modal-duration-input').value, 10),
+        reason: document.getElementById('modal-reason-input').value.trim(),
+        reschedule_from_id: db.rescheduleFromId
+      };
+      const alertBox = document.getElementById('modal-conflict-alert');
+      if (!payload.time) { alertBox.textContent = 'Zadejte platný čas začátku (HH:MM).'; alertBox.classList.remove('hidden'); return; }
+      if (!payload.date) { alertBox.textContent = 'Zadejte platné datum termínu.'; alertBox.classList.remove('hidden'); return; }
+      bookingInFlight = true;
+      try {
+        const created = await api('/api/appointments', { method: 'POST', body: payload });
+        const wasReschedule = !!db.rescheduleFromId;
+        closeBookingModal();
+        await loadAll();
+        db.currentDate = parseISODate(created.date);
+        db.activeDoctorId = created.doctor_id;
+        if (currentTab() === 'absence') renderSickList(); else switchTab('calendar');
+        showToast(wasReschedule ? "Termín přeplánován" : "Rezervace uložena",
+          `${formatDateCZ(parseISODate(created.date))}, ${created.time} – ${created.end_time}`);
+      } catch (e) {
+        alertBox.textContent = e.message;
+        alertBox.classList.remove('hidden');
+      } finally {
+        bookingInFlight = false;
+      }
+    }
+
+    // ---------- 8. SPRÁVA REZERVACE ----------
+    const STATUS_LABELS = { PLANNED: 'Plánováno', COMPLETED: 'Uskutečněno (odbaveno)', CANCELLED: 'Zrušeno', NO_SHOW: 'Nedostavil se' };
+    function reliabilityBadgeHtml(p) {
+      if (!p) return '-';
+      if (p.unreliable) return `<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-200">Rizikový: ${p.noShows}× nedorazil bez omluvy, ${p.cancellations}× zrušil</span>`;
+      return `<span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">Spolehlivý (${p.noShows}× nedorazil, ${p.cancellations}× zrušil)</span>`;
+    }
+
+    function openDetailModal(id) {
+      const app = db.appointments.find(a => a.id === id);
+      if (!app) return;
+      db.activeDetailApp = app;
+      const p = getPatient(app.patientId);
+      const appDate = parseISODate(app.date);
+      document.getElementById('detail-doctor-name').textContent = getDoctor(app.doctorId).name;
+      document.getElementById('detail-slot-time').textContent = `${formatDateCZ(appDate)}, ${app.time} – ${minutesToTime(timeToMinutes(app.time) + app.duration)}`;
+      document.getElementById('detail-patient-name').textContent = p ? `${patientName(p)} (nar. ${p.birthYear})` : '-';
+      document.getElementById('detail-patient-phone').textContent = p ? p.phone : '-';
+      document.getElementById('detail-reason-text').textContent = app.reason;
+      document.getElementById('detail-status-text').textContent = STATUS_LABELS[app.status] || app.status;
+      document.getElementById('detail-cancellation-badge').innerHTML = reliabilityBadgeHtml(p);
+
+      const isPlanned = app.status === 'PLANNED';
+      const notFuture = appDate <= TODAY;
+      document.getElementById('detail-btn-arrived').classList.toggle('hidden', !(isPlanned && notFuture));
+      document.getElementById('detail-btn-noshow').classList.toggle('hidden', !(isPlanned && notFuture));
+      document.getElementById('detail-btn-cancel').classList.toggle('hidden', !isPlanned);
+      document.getElementById('detail-btn-reschedule').classList.toggle('hidden', !isPlanned);
+      document.getElementById('detail-btn-visit').classList.toggle('hidden', app.status !== 'COMPLETED');
+      document.getElementById('detail-future-hint').classList.toggle('hidden', !(isPlanned && !notFuture));
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+    function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+
+    async function cancelBookingAction() {
+      const app = db.activeDetailApp; if (!app) return;
+      const res = await run(() => api(`/api/appointments/${app.id}/cancel`, { method: 'POST', body: { reason: 'Pacient se omluvil' } }));
+      if (!res) return;
+      closeDetailModal(); await loadAll(); renderCalendar();
+      const p = getPatient(app.patientId);
+      showAppAlert("Rezervace zrušena", `Rezervace pacienta ${patientName(p)} byla zrušena (omluveno).\nČasový slot ${app.time} je nyní volný. Zrušení bylo zaznamenáno do karty pacienta.`, "info");
+    }
+    async function noShowAction() {
+      const app = db.activeDetailApp; if (!app) return;
+      const res = await run(() => api(`/api/appointments/${app.id}/no-show`, { method: 'POST' }));
+      if (!res) return;
+      closeDetailModal(); await loadAll(); renderCalendar();
+      const p = getPatient(app.patientId);
+      showAppAlert("Zaznamenána absence bez omluvy", `Pacient ${patientName(p)} se nedostavil.\nPočet neomluvených absencí: ${p ? p.noShows : '?'}.`, "warning");
+    }
+    function rescheduleFromDetail() { const app = db.activeDetailApp; if (!app) return; closeDetailModal(); reschedule(app.id); }
+    async function startVisitFromModal() {
+      const app = db.activeDetailApp; if (!app) return;
+      const res = await run(() => api(`/api/appointments/${app.id}/complete`, { method: 'POST' }));
+      if (!res) return;
+      closeDetailModal(); await loadAll();
+      switchTab('visit', { appointmentId: app.id });
+      showToast("Pacient odbaven", "Návštěva označena jako uskutečněná. Vykažte provedené výkony.");
+    }
+    function openVisitFromDetail() { const app = db.activeDetailApp; if (!app) return; closeDetailModal(); switchTab('visit', { appointmentId: app.id }); }
+
+    // ---------- 9. KARTOTÉKA PACIENTŮ ----------
+    function renderPatientsTable(list) {
+      const tbody = document.getElementById('patients-table-rows');
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Žádný pacient neodpovídá hledání.</td></tr>'; return; }
+      tbody.innerHTML = list.map(p => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-4 pl-6 pr-3"><div class="flex items-center gap-3">
+            <div class="size-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-800 text-xs">${escapeHtml((p.firstName[0] || '') + (p.lastName[0] || ''))}</div>
+            <p class="font-bold text-slate-900">${escapeHtml(patientName(p))}</p></div></td>
+          <td class="px-3 py-4 font-mono text-slate-700">${p.birthYear}</td>
+          <td class="px-3 py-4 font-mono font-bold text-slate-800">${escapeHtml(p.insuranceId)}</td>
+          <td class="px-3 py-4"><span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 border border-slate-200">${escapeHtml(p.insuranceCode)}</span></td>
+          <td class="px-3 py-4 font-mono text-slate-700 whitespace-nowrap">${escapeHtml(p.phone)}</td>
+          <td class="px-3 py-4">${p.unreliable
+            ? `<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-800 border border-rose-200">Varování: ${p.noShows}× neomluveno</span><span class="block mt-1 text-[11px] text-slate-500">${p.cancellations}× zrušeno s omluvou</span>`
+            : `<span class="text-slate-500 font-medium">${p.noShows}× neomluveno · ${p.cancellations}× zrušeno</span>`}</td>
+          <td class="py-4 pr-6 pl-3 text-right"><button onclick="bookDirectForPatient(${p.id})" class="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100">Objednat</button></td>
+        </tr>`).join('');
+    }
+    function bookDirectForPatient(id) { switchTab('calendar'); openBookingModal({ patientId: id }); }
+
+    let searchRequest = 0;
+    async function handleSearch(q) {
+      const reqId = ++searchRequest;
+      const term = (q || '').trim();
+      const res = await run(() => api('/api/patients' + (term ? `?q=${encodeURIComponent(term)}` : '')));
+      if (!res || reqId !== searchRequest) return;
+      renderPatientsTable(res.map(mapPatient));
+    }
+
+    function clearPatientForm() {
+      ['np-first-name', 'np-last-name', 'np-insurance-id', 'np-phone', 'np-birth-year'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('np-insurance-code').value = '111';
+    }
+    function openNewPatientModal() { clearPatientForm(); document.getElementById('patient-modal').classList.remove('hidden'); }
+    function closeNewPatientModal() { document.getElementById('patient-modal').classList.add('hidden'); }
+
+    // Pomůcka pro recepci: z rodného čísla předvyplní rok narození (server ho stejně ověří)
+    function suggestBirthYear() {
+      const d = digitsOnly(document.getElementById('np-insurance-id').value);
+      const yearInput = document.getElementById('np-birth-year');
+      if (d.length < 9 || yearInput.dataset.touched === '1') return;
+      const yy = Number(d.slice(0, 2));
+      yearInput.value = d.length === 9 ? 1900 + yy : (yy >= 54 ? 1900 + yy : 2000 + yy);
+    }
+
+    async function savePatientCard() {
+      const body = {
+        first_name: document.getElementById('np-first-name').value.trim(),
+        last_name: document.getElementById('np-last-name').value.trim(),
+        birth_year: parseInt(document.getElementById('np-birth-year').value, 10),
+        insurance_id: document.getElementById('np-insurance-id').value.trim(),
+        insurance_code: document.getElementById('np-insurance-code').value,
+        phone: document.getElementById('np-phone').value.trim() || null
+      };
+      if (!body.first_name || !body.last_name || !body.insurance_id || !body.birth_year) {
+        showAppAlert("Neúplné údaje", "Vyplňte prosím jméno, příjmení, rodné číslo a rok narození.", "warning");
+        return;
+      }
+      let created;
+      try { created = mapPatient(await api('/api/patients', { method: 'POST', body })); }
+      catch (e) { showAppAlert(e.message.startsWith('Pacient s číslem') ? "Duplicitní pacient" : "Kartu nelze uložit", e.message, "error"); return; }
+
+      closeNewPatientModal(); clearPatientForm();
+      await loadAll();
+      if (currentTab() === 'patients') handleSearch(document.getElementById('patient-search-input').value);
+      if (!document.getElementById('booking-modal').classList.contains('hidden')) {
+        fillPatientPicker(created.id);
+        showToast("Karta pacienta založena", `${patientName(created)} – vybrán do rezervace.`);
+      } else {
+        showAppAlert("Karta pacienta založena", `Pacient ${patientName(created)} byl zaevidován do kartotéky ordinace.`, "success");
+      }
+    }
+
+    // ---------- 10. ODBAVENÍ & VÝKONY ----------
+    function populateVisitPicker(selectedAppointmentId) {
+      const picker = document.getElementById('visit-appointment-picker');
+      picker.innerHTML = '';
+      const finished = db.appointments.filter(a => a.status === 'COMPLETED').sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+      if (!finished.length) {
+        picker.innerHTML = '<option value="">Žádná uskutečněná návštěva k vyúčtování</option>';
+        db.visitDraft = null;
+        document.getElementById('visit-doctor-note').value = '';
+        document.getElementById('visit-procedures-rows').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Nejprve v diáři označte návštěvu za uskutečněnou.</td></tr>';
+        document.getElementById('visit-sum-points').textContent = '0 b.';
+        setVisitSavedState(null);
+        return;
+      }
+      finished.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = `${a.hasVisit ? '✓' : '•'} ${formatDateShortCZ(a.date)} ${a.time} – ${patientName(getPatient(a.patientId))} (${getDoctor(a.doctorId).name}) – ${a.reason}`;
+        picker.appendChild(opt);
+      });
+      if (selectedAppointmentId && finished.some(a => a.id === selectedAppointmentId)) picker.value = String(selectedAppointmentId);
+      syncVisitForm();
+    }
+    function setVisitSavedState(saved) {
+      const el = document.getElementById('visit-saved-state');
+      if (saved === null) { el.textContent = ''; return; }
+      el.className = "text-[11px] font-bold " + (saved ? "text-emerald-700" : "text-amber-700");
+      el.textContent = saved ? "Návštěva je uložena ve výkazu" : "Návštěva zatím není uložena – výkony se do výkazu propíší až po uložení";
+    }
+    function newVisitItem(procedureId) {
+      const proc = db.procedures.find(p => p.id === procedureId) || db.procedures[0];
+      return { procedureId: proc.id, count: 1, points: proc.points };
+    }
+    async function syncVisitForm() {
+      const appId = parseInt(document.getElementById('visit-appointment-picker').value, 10);
+      if (!appId) return;
+      const visit = await run(() => api(`/api/appointments/${appId}/visit`));
+      if (!visit) return;
+      db.visitDraft = visit.saved
+        ? { appointmentId: appId, note: visit.note, items: visit.items.map(i => ({ procedureId: i.procedure_id, count: i.count, points: i.points })) }
+        : { appointmentId: appId, note: '', items: [newVisitItem(db.procedures[0].id)] };
+      document.getElementById('visit-doctor-note').value = db.visitDraft.note || '';
+      setVisitSavedState(visit.saved);
+      renderVisitItems();
+    }
+    function renderVisitItems() {
+      const draft = db.visitDraft;
+      const tbody = document.getElementById('visit-procedures-rows');
+      if (!draft) { tbody.innerHTML = ''; return; }
+      if (!draft.items.length) tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Zatím není vykázán žádný výkon. Přidejte alespoň jeden.</td></tr>';
+      else tbody.innerHTML = draft.items.map((item, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2.5 pl-4 pr-3"><select onchange="changeVisitProc(${idx}, this.value)" class="block w-full rounded-lg bg-white border border-slate-300 px-2 py-1 text-xs text-slate-900 font-medium">
+            ${db.procedures.map(p => `<option value="${p.id}" ${p.id === item.procedureId ? 'selected' : ''}>${escapeHtml(p.code)} – ${escapeHtml(p.name)} (${p.points} b.)</option>`).join('')}</select></td>
+          <td class="px-3 py-2.5"><input type="number" min="1" max="10" step="1" value="${item.count}" onchange="changeVisitCount(${idx}, this)" class="block w-16 rounded-lg bg-white border border-slate-300 px-2 py-1 text-center font-bold text-xs"></td>
+          <td class="px-3 py-2.5 text-right font-mono text-slate-600">${item.points} b.</td>
+          <td class="px-3 py-2.5 text-right font-mono font-bold text-indigo-700">${item.points * item.count} b.</td>
+          <td class="py-2.5 pr-4 pl-3 text-center"><button onclick="removeVisitProc(${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-base" title="Odebrat výkon">&times;</button></td>
+        </tr>`).join('');
+      const sum = draft.items.reduce((s, i) => s + i.points * i.count, 0);
+      document.getElementById('visit-sum-points').textContent = `${sum.toLocaleString('cs-CZ')} b.`;
+    }
+    function addProcedureToActiveVisit() {
+      if (!db.visitDraft) { showAppAlert("Není vybrána návštěva", "Nejprve v diáři označte návštěvu za uskutečněnou.", "warning"); return; }
+      // Nabídne první výkon, který na návštěvě ještě není (stejné výkony server sčítá do jednoho řádku)
+      const used = new Set(db.visitDraft.items.map(i => i.procedureId));
+      const next = db.procedures.find(p => !used.has(p.id)) || db.procedures[0];
+      db.visitDraft.items.push(newVisitItem(next.id));
+      renderVisitItems();
+    }
+    function changeVisitProc(idx, newId) {
+      if (!db.visitDraft) return;
+      db.visitDraft.items[idx] = { ...newVisitItem(parseInt(newId, 10)), count: db.visitDraft.items[idx].count };
+      renderVisitItems();
+    }
+    function changeVisitCount(idx, input) {
+      if (!db.visitDraft) return;
+      let n = parseInt(input.value, 10);
+      if (!Number.isFinite(n) || n < 1) n = 1;
+      if (n > 10) { n = 10; showToast("Maximální počet", "Jeden výkon lze vykázat nejvýše 10× za návštěvu.", "info"); }
+      db.visitDraft.items[idx].count = n;
+      renderVisitItems();
+    }
+    function removeVisitProc(idx) { if (!db.visitDraft) return; db.visitDraft.items.splice(idx, 1); renderVisitItems(); }
+
+    async function saveActiveVisit() {
+      const draft = db.visitDraft;
+      if (!draft) { showAppAlert("Není vybrána návštěva", "Výkon nelze zapsat k návštěvě, která se neuskutečnila.", "warning"); return; }
+      const body = { note: document.getElementById('visit-doctor-note').value.trim(),
+                     items: draft.items.map(i => ({ procedure_id: i.procedureId, count: i.count })) };
+      let saved;
+      try { saved = await api(`/api/appointments/${draft.appointmentId}/visit`, { method: 'PUT', body }); }
+      catch (e) { showAppAlert(e.message.includes('alespoň jeden') ? "Chybí výkony" : "Návštěvu nelze uložit", e.message, "warning"); return; }
+      await loadAll();
+      populateVisitPicker(draft.appointmentId);
+      showAppAlert("Návštěva byla uložena", `Provedené výkony v celkové hodnotě ${saved.total_points.toLocaleString('cs-CZ')} b. byly přiřazeny k návštěvě a propsány do měsíčního výkazu.`, "success");
+    }
+
+    // ---------- 11. MĚSÍČNÍ VÝKAZY (počítá server) ----------
+    function formatMonth(ym) { const [y, m] = ym.split('-').map(Number); return `${CZ_MONTHS_NOM[m - 1]} ${y}`; }
+    function initBillingFilters() {
+      const monthSel = document.getElementById('billing-month-select');
+      const current = monthSel.value;
+      const months = new Set([formatDateISO(TODAY).slice(0, 7)]);
+      db.appointments.forEach(a => months.add(a.date.slice(0, 7)));
+      monthSel.innerHTML = [...months].sort().reverse().map(m => `<option value="${m}">${formatMonth(m)}</option>`).join('');
+      monthSel.value = current && months.has(current) ? current : formatDateISO(TODAY).slice(0, 7);
+    }
+    function billingQuery() {
+      const month = document.getElementById('billing-month-select').value;
+      const doctor = document.getElementById('billing-doctor-select').value;
+      return `month=${month}${doctor ? `&doctor_id=${doctor}` : ''}`;
+    }
+    let billingRequest = 0;
+    async function renderBilling() {
+      initBillingFilters();
+      const reqId = ++billingRequest;
+      const r = await run(() => api(`/api/reports/monthly?${billingQuery()}`));
+      if (!r || reqId !== billingRequest) return;
+      const fmt = n => `${n.toLocaleString('cs-CZ')} b.`;
+      document.getElementById('billing-total-points').textContent = fmt(r.total_points);
+      document.getElementById('billing-patients').textContent = `${r.patients} ${r.patients === 1 ? 'osoba' : (r.patients >= 2 && r.patients <= 4 ? 'osoby' : 'osob')}`;
+      document.getElementById('billing-visits').textContent = `${r.visits}`;
+      document.getElementById('billing-stornos').textContent = `${r.cancelled_or_no_show}`;
+      document.getElementById('billing-table-total').textContent = fmt(r.total_points);
+      document.getElementById('billing-table-rows').innerHTML = !r.rows.length
+        ? '<tr><td colspan="6" class="p-6 text-center text-slate-400">Za zvolený měsíc a lékaře nejsou uložené žádné vykázané výkony.</td></tr>'
+        : r.rows.map(x => `<tr>
+            <td class="py-3 pl-6 pr-3 font-bold text-slate-900">${escapeHtml(x.insurance_code)} – ${escapeHtml(x.insurance_name)}</td>
+            <td class="px-3 py-3 font-mono font-bold text-indigo-700">${escapeHtml(x.code)}</td>
+            <td class="px-3 py-3 text-slate-700">${escapeHtml(x.name)}</td>
+            <td class="px-3 py-3 text-center font-bold">${x.count}×</td>
+            <td class="px-3 py-3 text-right font-mono">${x.points} b.</td>
+            <td class="py-3 pr-6 pl-3 text-right font-mono font-bold text-indigo-700">${fmt(x.total)}</td></tr>`).join('');
+    }
+    function exportBillingBatch() {
+      const a = document.createElement('a');
+      a.href = `/api/reports/monthly.csv?${billingQuery()}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      showToast("Export", "Stahuji podklady výkazu (CSV).");
+    }
+
+    // ---------- 12. VÝPADEK LÉKAŘE ----------
+    function initAbsenceForm() {
+      const dateInput = document.getElementById('absence-date-input');
+      if (!dateInput.value) dateInput.value = formatDateISO(db.currentDate < TODAY ? TODAY : db.currentDate);
+      dateInput.min = formatDateISO(TODAY);
+    }
+    async function addAbsence() {
+      const doctorId = parseInt(document.getElementById('absence-doctor-select').value, 10);
+      const isoDate = document.getElementById('absence-date-input').value;
+      if (!isoDate) { showAppAlert("Chybí datum", "Zadejte den nepřítomnosti lékaře.", "warning"); return; }
+      const res = await run(() => api('/api/absences', { method: 'POST', body: { doctor_id: doctorId, date: isoDate } }), 'Nepřítomnost nelze zaevidovat');
+      if (!res) return;
+      await loadAll(); renderSickList();
+      const affected = db.appointments.filter(a => a.doctorId === doctorId && a.date === isoDate && a.status === 'PLANNED').length;
+      showToast("Nepřítomnost zaevidována", `${getDoctor(doctorId).name}, ${formatDateShortCZ(isoDate)} – dotčeno ${affected} termínů.`);
+    }
+    async function removeAbsence(id) {
+      const res = await run(() => api(`/api/absences/${id}`, { method: 'DELETE' }).then(() => true));
+      if (!res) return;
+      await loadAll(); renderSickList();
+      showToast("Nepřítomnost zrušena", "Diář lékaře je v daný den opět otevřený.", "info");
+    }
+    function renderSickList() {
+      initAbsenceForm();
+      const sorted = [...db.absences].sort((a, b) => a.date.localeCompare(b.date));
+      document.getElementById('absence-list').innerHTML = !sorted.length
+        ? '<span class="text-xs text-slate-500">Žádná evidovaná nepřítomnost.</span>'
+        : sorted.map(a => `<span class="inline-flex items-center gap-2 rounded-lg bg-white border border-rose-200 px-2.5 py-1 text-xs font-bold text-rose-800">
+              ${escapeHtml(getDoctor(a.doctorId).name)} · ${formatDateShortCZ(a.date)}
+              <button onclick="removeAbsence(${a.id})" class="text-rose-400 hover:text-rose-700 text-sm leading-none" title="Zrušit nepřítomnost">&times;</button></span>`).join('');
+
+      const tbody = document.getElementById('sick-table-rows');
+      const affected = db.appointments
+        .filter(a => isDoctorAbsent(a.doctorId, a.date) && (a.status === 'PLANNED' || a.rescheduledToId))
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+      if (!affected.length) { tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">Žádné termíny k obvolání. Nejprve zaevidujte nepřítomnost lékaře.</td></tr>'; return; }
+      tbody.innerHTML = affected.map(a => {
+        const p = getPatient(a.patientId);
+        const newApp = a.rescheduledToId ? db.appointments.find(x => x.id === a.rescheduledToId) : null;
+        const statusHtml = newApp
+          ? `<span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-800 border border-indigo-200">Přeplánováno: ${formatDateShortCZ(newApp.date)} ${newApp.time}</span>`
+          : a.callStatus === 'CALLED'
+            ? '<span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">✓ Obvoláno</span>'
+            : '<span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800 border border-amber-200">Čeká na obvolání</span>';
+        return `<tr class="hover:bg-rose-50/50 transition">
+          <td class="py-3.5 pl-6 pr-3 font-mono font-bold text-slate-900 whitespace-nowrap">${formatDateShortCZ(a.date)} ${a.time}</td>
+          <td class="px-3 py-3.5 text-slate-700 whitespace-nowrap">${escapeHtml(getDoctor(a.doctorId).name)}</td>
+          <td class="px-3 py-3.5 font-bold text-slate-900">${escapeHtml(patientName(p))}</td>
+          <td class="px-3 py-3.5 font-mono text-indigo-700 font-bold whitespace-nowrap">${escapeHtml(p ? p.phone : '')}</td>
+          <td class="px-3 py-3.5 text-slate-600 italic">„${escapeHtml(a.reason)}“</td>
+          <td class="px-3 py-3.5">${statusHtml}</td>
+          <td class="py-3.5 pr-6 pl-3 text-right space-x-2 whitespace-nowrap">${newApp ? '' : `
+            <button onclick="setCalled(${a.id})" class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">Zavoláno</button>
+            <button onclick="reschedule(${a.id})" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700">Přeplánovat</button>`}</td></tr>`;
+      }).join('');
+    }
+    async function setCalled(id) {
+      const res = await run(() => api(`/api/appointments/${id}/called`, { method: 'POST' }));
+      if (!res) return;
+      await loadAll(); renderSickList();
+      showToast("Kontakt zaznamenán", "Pacient byl označen jako telefonicky kontaktovaný.");
+    }
+    function reschedule(id) {
+      const app = db.appointments.find(a => a.id === id);
+      if (!app || app.status !== 'PLANNED') return;
+      let nextDay = addDays(parseISODate(app.date), 1);
+      while (nextDay.getDay() === 0 || nextDay.getDay() === 6) nextDay = addDays(nextDay, 1);
+      openBookingModal({ rescheduleFromId: app.id, patientId: app.patientId, doctorId: app.doctorId,
+                         isoDate: formatDateISO(nextDay), time: app.time, duration: app.duration, reason: app.reason });
+    }
+
+    // ---------- INICIALIZACE ----------
+    document.getElementById('np-birth-year').addEventListener('input', e => { e.target.dataset.touched = e.target.value ? '1' : ''; });
+    (async () => {
+      setView('day');
+      try { await loadAll(); } catch (e) { return; }
+      switchTab('calendar');
+    })();
+  </script>
+</body>
+</html>
