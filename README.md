@@ -1,211 +1,191 @@
 # Ordinace Na Vyhlídce – Rezervační a evidenční systém
 
-Semestrální projekt z předmětu **Pokročilé programování (PPRO)**, ZS 2026/2027  
-Fakulta informatiky a managementu, Univerzita Hradec Králové  
-**Klient**: MUDr. Jana Hrubá, Ordinace Na Vyhlídce  
+Semestrální projekt z předmětu **Pokročilé programování (PPRO)**, ZS 2026/2027
+Fakulta informatiky a managementu, Univerzita Hradec Králové
+**Zadání A – Rezervace v ordinaci** · **Klient**: MUDr. Jana Hrubá, Ordinace Na Vyhlídce
+
+Webová aplikace pro recepci (paní Věra) a tři lékaře. Nahrazuje papírový diář: eviduje pacienty, lékaře a jejich ordinační hodiny, hlídá, aby nevznikly dvě rezervace na stejný čas, zaznamenává provedené výkony a z nich automaticky skládá měsíční výkaz pro pojišťovny.
+
+📄 Technická dokumentace: [`docs/dokumentace.pdf`](docs/dokumentace.pdf)
 
 ---
 
-> **Aktuální stav repozitáře:** obsahuje klikatelný prototyp uživatelského rozhraní (`index.html`), který běží čistě v prohlížeči nad syntetickými daty v paměti (po obnovení stránky se data vrátí do výchozího stavu). Doménová pravidla jsou v prototypu implementována v JavaScriptu jako předloha pro aplikační vrstvu. Backend, databáze, Docker a automatické testy popsané níže jsou **plánované** a v repozitáři zatím nejsou.
+## 1. Rychlé spuštění
 
----
+Prerekvizity: **Docker** a **Docker Compose** (Docker Desktop), Git.
 
-## 1. Popis projektu a cíl řešení
-Cílem projektu je nahradit dosavadní papírový diář a ruční přepisování vykázaných bodů moderní webovou aplikací pro recepci ordinace (paní Věra) a 3 lékaře.
-
-### Klíčové přínosy:
-1. **Eliminace kolizí termínů**: Systém znemožní vznik dvou překrývajících se rezervací u jednoho lékaře.
-2. **Respektování ordinačních hodin**: Rezervaci lze vytvořit pouze v platném časovém okně daného lékaře na pracovišti Na Vyhlídce.
-3. **Automatizace měsíčních výkazů**: Okamžitý souhrn provedených výkonů a bodů pro zdravotní pojišťovny za vybraného lékaře a kalendářní měsíc.
-4. **Evidence nespolehlivých pacientů**: Sledování zrušených rezervací a absencí bez omluvy.
-
----
-
-## 2. Architektura aplikace (Třívrstvá)
-Aplikace striktně dodržuje třívrstvou architekturu se závislostmi vedoucími **výhradně jedním směrem**:
-
-```
-[ Prezentační vrstva / REST API & UI ]
-                 │
-                 ▼
-     [ Aplikační & Doménová logika ]
-                 │
-                 ▼
-[ Datová vrstva / Repozitáře & Migrace (PostgreSQL) ]
+```bash
+git clone https://github.com/NovakGroup/ppro-clinic-reservation.git
+cd ppro-clinic-reservation
+docker compose up --build
 ```
 
-1. **Prezentační vrstva (Web UI & REST API)**:
-   - Zpracovává HTTP požadavky, provádí základní validaci vstupních formátů DTO a vrací odpovědi.
-   - Neobsahuje žádnou doménovou ani byznysovou logiku a **nikdy nevolá databázi ani SQL napřímo**.
-2. **Aplikační a doménová vrstva (Services / Use Cases)**:
-   - Zajišťuje veškerá byznysová pravidla (kontrola ordinační doby lékaře, detekce časových překryvů rezervací, validace stavu návštěvy před přiřazením výkonu, výpočet bodů).
-   - Nezávisí na konkrétním webovém frameworku.
-3. **Datová vrstva (Persistence / Repositories)**:
-   - Zajišťuje ukládání a načítání entit z relační databáze (PostgreSQL).
-   - Používá transakční zpracování s databázovými zámky k zabránění souběhu při rezervacích (race conditions).
-   - Schéma je spravováno verzovanými migracemi.
+Hotovo – žádné další ruční kroky. Při startu se automaticky provedou migrace databáze a do prázdné databáze se vloží syntetická testovací data.
 
----
+| Služba | Adresa |
+|---|---|
+| Webová aplikace (recepce) | http://localhost:8000 |
+| API dokumentace (Swagger UI) | http://localhost:8000/docs |
+| Health check | http://localhost:8000/health |
 
-## 3. Datový model
+**Přihlášení:** aplikace v této fázi přihlášení nevyžaduje (pracuje s ní jen recepce na lokálním počítači, viz Rozhodnutí 2). Databáze běží jen uvnitř Dockeru s výchozím lokálním heslem z `docker-compose.yml`; pro vlastní hodnoty zkopírujte `.env.example` na `.env` (soubor `.env` je v `.gitignore`).
 
-Datový model splňuje povinné minimum (7 entit a vazba M:N s atributem počtu):
+Data se ukládají do Docker volume `db-data`. Návrat k výchozím testovacím datům: `docker compose down -v && docker compose up`.
+
+## 2. Testy
+
+```bash
+docker compose run --rm test-unit          # jednotkové testy aplikační logiky (bez databáze)
+docker compose run --rm test-integration   # integrační testy proti skutečné PostgreSQL
+```
+
+* **Jednotkové** (`backend/tests/unit`): doménová pravidla (překryv intervalů, ordinační hodiny, rodné číslo, telefon), služby nad in-memory repozitáři (kolize, přeplánování, stavy rezervace, výkony a historizace bodů) a **architektonický test**, který hlídá směr závislostí mezi vrstvami.
+* **Integrační** (`backend/tests/integration`): REST API + PostgreSQL – exclusion constraint proti překryvu, zákaz mazání historie, souběžná rezervace stejného slotu, výkaz, nepřítomnost lékaře a přeplánování.
+
+## 3. Struktura repozitáře
+
+```
+backend/
+  app/
+    api/            prezentační vrstva – REST endpointy, DTO (schemas), mapování
+    services/       aplikační vrstva – případy užití (rezervace, návštěvy, výkazy…)
+    domain/         čistá doménová pravidla a výjimky (bez frameworku i DB)
+    repositories/   datová vrstva – jediné místo s databázovými dotazy
+    db/             ORM modely a připojení k DB
+    container.py    kompoziční kořen – skládá vrstvy dohromady
+    seed.py         syntetická testovací data
+  migrations/       verzované migrace Alembic
+  tests/            unit + integration
+  Dockerfile, entrypoint.sh, requirements.txt
+frontend/index.html webové rozhraní recepce (volá REST API)
+index.html          statický klikací prototyp UI (GitHub Pages, data jen v paměti prohlížeče)
+docs/               technická dokumentace (PDF)
+docker-compose.yml
+```
+
+## 4. Architektura (tři vrstvy, závislosti jen jedním směrem)
+
+```
+Prezentační vrstva   app/api        FastAPI endpointy, validace formátu vstupu (Pydantic)
+        │
+        ▼
+Aplikační vrstva     app/services   obchodní pravidla, transakce (+ app/domain: čistá pravidla)
+        │
+        ▼
+Datová vrstva        app/repositories + app/db   SQLAlchemy, PostgreSQL, migrace Alembic
+```
+
+* Endpointy volají jen služby. SQL ani repozitáře v `app/api` nejsou – hlídá to test `tests/unit/test_architecture.py`.
+* Služby nepoužívají SQLAlchemy ani FastAPI; pracují s repozitáři přes *unit of work*, takže je lze testovat nad in-memory náhradou.
+* Vrstvy propojuje jen `app/container.py` (dependency injection přes FastAPI `Depends`).
+
+## 5. Datový model
+
+8 entit, vazba **M:N** Návštěva ↔ Výkon přes vazební entitu `VISIT_PROCEDURE` s atributy *počet* a *body v době výkonu*.
 
 ```mermaid
 erDiagram
-    DOCTOR ||--o{ DOCTOR_SCHEDULE : has
-    DOCTOR ||--o{ APPOINTMENT : attends
-    PATIENT ||--o{ APPOINTMENT : books
-    APPOINTMENT ||--o| VISIT : results_in
-    VISIT ||--|{ VISIT_PROCEDURE : contains
-    MEDICAL_PROCEDURE ||--|{ VISIT_PROCEDURE : "is used in"
+    DOCTOR ||--o{ DOCTOR_SCHEDULE : "má ordinační hodiny"
+    DOCTOR ||--o{ DOCTOR_ABSENCE : "nepřítomnost"
+    DOCTOR ||--o{ APPOINTMENT : ošetřuje
+    PATIENT ||--o{ APPOINTMENT : "je objednán"
+    APPOINTMENT ||--o| VISIT : "uskuteční se jako"
+    APPOINTMENT |o--o| APPOINTMENT : "přeplánováno na"
+    VISIT ||--|{ VISIT_PROCEDURE : obsahuje
+    MEDICAL_PROCEDURE ||--o{ VISIT_PROCEDURE : "je proveden"
 
     DOCTOR {
-        uuid id PK
+        int id PK
         string first_name
         string last_name
-        string email
-        string phone
-        boolean active
+        string specialization
     }
-
     DOCTOR_SCHEDULE {
-        uuid id PK
-        uuid doctor_id FK
-        int day_of_week
+        int id PK
+        int doctor_id FK
+        int day_of_week "0 = pondělí"
         time start_time
         time end_time
-        string location
+        string location "Na Vyhlídce / externí"
     }
-
+    DOCTOR_ABSENCE {
+        int id PK
+        int doctor_id FK
+        date date "UNIQUE s doctor_id"
+    }
     PATIENT {
-        uuid id PK
+        int id PK
         string first_name
         string last_name
-        string insurance_id UK "Číslo pojištěnce (RČ)"
-        string insurance_code "Kód pojišťovny (např. 111)"
+        int birth_year
+        string insurance_id UK "rodné číslo XXXXXX/XXXX"
+        string insurance_code "pojišťovna"
         string phone
-        date birth_date
-        datetime created_at
     }
-
     APPOINTMENT {
-        uuid id PK
-        uuid doctor_id FK
-        uuid patient_id FK
-        datetime start_time
-        datetime end_time
-        string status "PLANNED | COMPLETED | CANCELLED | NO_SHOW"
+        int id PK
+        int doctor_id FK
+        int patient_id FK
+        datetime start_at
+        datetime end_at
+        enum status "PLANNED|COMPLETED|CANCELLED|NO_SHOW"
         string reason
-        string cancellation_reason
-        datetime cancelled_at
+        enum cancelled_by "PATIENT|CLINIC"
+        bool patient_called
+        int rescheduled_to_id FK
     }
-
     VISIT {
-        uuid id PK
-        uuid appointment_id FK
-        datetime visit_date
-        string clinical_note
+        int id PK
+        int appointment_id FK "UNIQUE"
+        date visit_date
+        text clinical_note
     }
-
     MEDICAL_PROCEDURE {
-        uuid id PK
-        string code UK "Kód výkonu VZP"
+        int id PK
+        string code UK
         string name
-        int points "Bodové ohodnocení"
+        int points
     }
-
     VISIT_PROCEDURE {
-        uuid id PK
-        uuid visit_id FK
-        uuid procedure_id FK
-        int count "Počet provedení (např. 3x)"
-        int billed_points "Body platné v době výkonu"
+        int id PK
+        int visit_id FK
+        int procedure_id FK
+        int count "1–10"
+        int billed_points "body v době výkonu"
     }
 ```
 
-### Řešení klíčových omezení (Business & DB Constraints):
-* **Zákaz překryvu termínů**: Zajištěno na úrovni doménové služby a podpořeno databázovým indexem/omezením na intervaly `[start_time, end_time)` pro aktivní rezervace daného lékaře. Interval je polootevřený – nový termín smí začít přesně v okamžiku konce předchozího (např. 08:15–08:30 a 08:30–08:45 je platné).
-* **Ordinační hodiny**: Rezervace musí celá ležet uvnitř jednoho okna `DOCTOR_SCHEDULE` lékaře na pracovišti Na Vyhlídce (začátek i konec), začínat v 15minutové mřížce, nesmí být o víkendu, v minulosti ani v den evidované nepřítomnosti lékaře. Okna s jiným `location` (např. úterní odpoledne MUDr. Svobody) se v diáři zobrazují jako blokovaná.
-* **Číslo pojištěnce**: Ukládá se v normalizovaném tvaru `XXXXXX/XXXX`; při zakládání se ověřuje formát (9 nebo 10 číslic, platný měsíc a den, u 10místného čísla kontrolní dělitelnost 11) a unikátnost bez ohledu na zápis (s lomítkem / bez lomítka).
-* **Vazba M:N**: Realizována vazební entitou `VISIT_PROCEDURE` spojující `VISIT` a `MEDICAL_PROCEDURE` s doplňkovým údajem `count` (počet aplikací) a historizovaným počtem bodů `billed_points`.
-* **Zákaz mazání historie**: Pacienti ani návštěvy se fyzicky nemažou (pouze soft delete / auditní log).
+### Pravidla klienta a kde se vynucují
 
----
+| Pravidlo | Aplikace (služba) | Databáze |
+|---|---|---|
+| Dvě rezervace na stejný čas u jednoho lékaře nesmí vzniknout „ani omylem, ani ručně“ | `BookingService.create` – kontrola překryvu + zámek řádku lékaře (`SELECT … FOR UPDATE`) | exclusion constraint `ex_appointment_no_overlap` nad `tsrange(start_at, end_at)` pro aktivní stavy |
+| Rezervace jen v ordinačních hodinách lékaře (ne na externím pracovišti, ne o víkendu, ne v minulosti, ne v den nepřítomnosti) | `rules.validate_booking_time` | – |
+| Výkon nelze zapsat k neuskutečněné návštěvě | `VisitService.save` (jen stav `COMPLETED`) | – |
+| Historie pacienta se nemaže | žádné mazací endpointy | triggery odmítnou `DELETE` z `patient`, `appointment`, `visit` |
+| Pacient je jednoznačný | normalizace a kontrola RČ | `UNIQUE (insurance_id)` |
 
-## 4. Rozhodnutí k otevřeným bodům ze zadání
+## 6. Rozhodnutí k otevřeným bodům zadání
 
-Podle metodiky projektu jsou níže zapsána jednoznačná rozhodnutí k bodům, které klient neměl dořešené:
+1. **Délka termínu.** Diář má pevnou mřížku po 15 minutách, rezervace má vlastní délku 15/30/45/60 min a vždy začíná na hraně mřížky. Termíny mohou navazovat (interval `[začátek, konec)`). Kombinuje přehlednost mřížky s tím, že „podle toho, co se dělá“.
+2. **Kdo zakládá rezervaci.** V této verzi výhradně recepce. Online objednávání pacientů není součástí řešení; díky REST API a pravidlům v aplikační vrstvě jde doplnit později bez změny logiky (přibyla by autentizace a role).
+3. **Zrušená rezervace.** Nemaže se: změní stav na `CANCELLED` (pacient se omluvil) nebo `NO_SHOW` (nepřišel bez omluvy) a tím se z diáře uvolní slot. Záznam zůstává pro statistiku; jako rizikový je pacient označen od 3 neomluvených absencí. Přeplánování ze strany ordinace (`cancelled_by = CLINIC`) se pacientovi nepočítá.
+4. **Totožnost pacienta.** Jednoznačným klíčem je číslo pojištěnce (rodné číslo) – ověřuje se formát i kontrolní číslice a ukládá se v jednotném tvaru, takže duplicitu pozná i zápis bez lomítka. Pokus o duplicitu se odmítne s informací, kdo už je v kartotéce. Rok narození musí odpovídat RČ.
+5. **Nemoc lékaře.** Recepce zaeviduje nepřítomnost lékaře na konkrétní den; diář lékaře se ten den zablokuje a zobrazí se seznam dotčených pacientů s telefony. Systém nic neruší sám: recepce u každého označí „Zavoláno“ a termín přeplánuje (původní se zruší až po úspěšném uložení nového).
 
-1. **Délka termínu (pevná mřížka vs. dynamická délka)**:
-   * *Rozhodnutí*: Diář bude pracovat s 15minutovými základními sloty. Každá rezervace má definovanou délku v násobcích 15 minut (výchozí délka je 15 minut, s možností prodloužení na 30/45/60 min dle typu zákroku). Tím je zachována flexibilita bez vzniku neuspořádaných časových fragmentů.
-2. **Kdo zakládá rezervaci (recepce vs. online pacienti)**:
-   * *Rozhodnutí*: V první fázi vytváří rezervace výhradně recepce (paní Věra) v autentizovaném rozhraní. Architektura je však navržena s čistým REST API, které umožní budoucí napojení pacientského portálu bez úprav doménové logiky.
-3. **Co se zrušenou rezervací (odstranění z diáře vs. statistika)**:
-   * *Rozhodnutí*: Zrušená rezervace se nemaže z databáze, ale změní stav na `CANCELLED` (příp. `NO_SHOW`), čímž se její časový interval okamžitě uvolní v kalendáři pro jiné pacienty. Současně zůstává v databázi pro statistiky nespolehlivých pacientů.
-   * `CANCELLED` = pacient se předem omluvil; `NO_SHOW` = nedostavil se bez omluvy (lze zaznamenat jen u termínu, který už nastal). Pacient je označen jako rizikový od 3 neomluvených absencí. Přeplánování z důvodu na straně ordinace (např. nemoc lékaře) se pacientovi jako zrušení nezapočítává.
-   * Odbavenou (`COMPLETED`) návštěvu již nelze zrušit.
-4. **Totožnost pacienta a duplicity (např. paní Nováková)**:
-   * *Rozhodnutí*: Jednoznačným přirozeným identifikátorem pacienta je číslo pojištěnce (rodné číslo). Systém při zakládání nedovolí duplicitní identifikátor a při vyhledávání v recepci nabízí našeptávač podle příjmení i telefonního čísla.
-5. **Nemoc lékaře a výpadek ordinace**:
-   * *Rozhodnutí*: Systém umožní označit nedostupnost lékaře a nabídne recepční přehledný interaktivní seznam všech dotčených rezervací s kontakty pro telefonické obvolání a tlačítky pro hromadné/individuální přeplánování na jiný termín či lékaře.
-   * V den evidované nepřítomnosti je diář lékaře pro nové rezervace zablokován. Původní termín se při přeplánování zruší až po úspěšném uložení náhradního termínu.
+## 7. Použité technologie
 
----
+* **Python 3.12 + FastAPI** – stručný a čitelný kód, automatická OpenAPI dokumentace, snadné testování.
+* **PostgreSQL 16** – exclusion constraint nad časovými intervaly vynutí zákaz překryvu přímo v databázi.
+* **SQLAlchemy 2** – ORM a dotazy soustředěné v repozitářích.
+* **Alembic** – verzované migrace schématu.
+* **Pydantic** – validace vstupních DTO.
+* **pytest** – jednotkové i integrační testy.
+* **Docker + Docker Compose** – spuštění celé aplikace jedním příkazem.
+* **HTML + Tailwind CSS + čistý JavaScript** – jednoduché rozhraní bez build kroku.
 
-## 5. Použité technologie (Návrh ke schválení)
+## 8. Historie změn
 
-* **Backend**: Python 3.12 s frameworkem **FastAPI** (rychlost, automatická OpenAPI/Swagger dokumentace, čistá architektura, snadné testování) nebo **Java 21 / Spring Boot** (dle vaší osobní preference pro výuku na FIM UHK).
-* **Databáze**: **PostgreSQL 16** (silná podpora časových intervalů, integritních omezení a transakcí).
-* **Migrace**: **Alembic** (v případě Pythonu) nebo **Flyway** (v případě Javy).
-* **Kontejnerizace**: **Docker** & **Docker Compose** pro jedno-příkazové spuštění celé infrastruktury.
-* **Testování**: **pytest** + `Testcontainers` / testovací DB pro integrační testy.
-
----
-
-## 6. Spuštění projektu
-
-### Prototyp UI (aktuální stav)
-Stačí otevřít soubor `index.html` v prohlížeči (vyžaduje připojení k internetu kvůli Tailwind CSS z CDN). Data jsou syntetická a vztažená k aktuálnímu týdnu.
-
-### Plná aplikace (plánováno – zatím není v repozitáři)
-
-#### Prerekvizity
-* Nainstalovaný `Docker` a `docker compose`.
-* Git.
-
-#### Postup krok za krokem
-1. Klonování repozitáře:
-   ```bash
-   git clone https://github.com/NovakGroup/ppro-clinic-reservation.git
-   cd ppro-clinic-reservation
-   ```
-2. Vytvoření souboru prostředí:
-   ```bash
-   cp .env.example .env
-   ```
-3. Spuštění kompletního prostředí:
-   ```bash
-   docker compose up --build
-   ```
-4. Aplikace a dokumentace jsou dostupné na:
-   * Webová aplikace: `http://localhost:8000`
-   * API dokumentace (Swagger): `http://localhost:8000/docs`
-
----
-
-## 7. Testování (plánováno)
-* **Jednotkové testy** (aplikační logika, validace překryvů, výpočet bodů):
-  ```bash
-  docker compose run --rm test-unit
-  ```
-* **Integrační testy** (proti reálné PostgreSQL databázi):
-  ```bash
-  docker compose run --rm test-integration
-  ```
-
----
-
-## 8. Historie změn (Changelog)
-* `2026-10-23`: Inicializace repozitáře, definice pravidel spolupráce (`agent.md`), architektonický návrh a specifikace zadání A v `README.md`.
-* `2026-10-30`: Oprava prototypu UI – vynucení ordinačních hodin dle strukturovaného rozvrhu lékařů, polootevřené intervaly kolizí (termín smí navazovat), validace času a 15min mřížky, výběr data v rezervaci, rozlišení `CANCELLED` / `NO_SHOW`, validace a normalizace RČ a telefonu, ochrana proti XSS, skutečné ukládání návštěv a výkonů (historizované body), výkazy počítané z dat s filtrem lékaře a měsíce a exportem CSV, evidence nepřítomnosti lékaře s blokací diáře a přeplánováním, vyhledávání bez diakritiky. Odstraněn duplicitní `prototype.html`, přidán `.gitignore`, README uvedeno do souladu se skutečným stavem.
+* `2026-10-23` – inicializace repozitáře, pravidla spolupráce (`agent.md`), návrh a specifikace zadání A.
+* `2026-10-30` – klikací prototyp UI; oprava chyb prototypu (ordinační hodiny, kolize, validace, výkazy, výpadek lékaře); kompaktní hlavička.
+* `2026-10-30` – backend FastAPI ve třech vrstvách, PostgreSQL s migracemi, exclusion constraint a zákaz mazání historie v DB, frontend napojený na REST API, týdenní přehled volných termínů, rok narození pacienta, Docker Compose, jednotkové a integrační testy, technická dokumentace.
