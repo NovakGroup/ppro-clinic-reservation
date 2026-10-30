@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Ordinace Na Vyhlídce – technická dokumentace</title>
+<style>
+  @page { size: A4; margin: 22mm 20mm 20mm 20mm; }
+  body { font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif; font-size: 9.5pt; line-height: 1.42; color: #1e293b; }
+  h1 { font-size: 18pt; color: #312e81; margin: 0 0 8pt; padding-bottom: 4pt; border-bottom: 2px solid #c7d2fe; }
+  h2 { font-size: 12.5pt; color: #3730a3; margin: 16pt 0 6pt; }
+  h3 { font-size: 10.5pt; margin: 12pt 0 4pt; }
+  p { margin: 0 0 6pt; text-align: justify; }
+  ul, ol { margin: 0 0 6pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  code, pre { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; }
+  code { background: #f1f5f9; padding: 0 2pt; border-radius: 2px; }
+  pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6pt 8pt; white-space: pre-wrap; margin: 4pt 0 8pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9pt; }
+  th, td { border: 1px solid #cbd5e1; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  th { background: #eef2ff; }
+  .chapter { page-break-before: always; }
+  .note { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 5pt 8pt; margin: 6pt 0 10pt; font-size: 9pt; }
+  .fig { text-align: center; margin: 6pt 0; }
+  .fig img { width: 100%; }
+  .caption { font-size: 8.5pt; color: #64748b; text-align: center; margin-top: 2pt; }
+  /* titulní strana */
+  .title-page { height: 245mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .title-top { margin-top: 30mm; }
+  .title-top .school { font-size: 10pt; color: #64748b; letter-spacing: .5pt; text-transform: uppercase; }
+  .title-top .name { font-size: 26pt; font-weight: bold; color: #312e81; margin: 18pt 0 6pt; line-height: 1.2; }
+  .title-top .sub { font-size: 13pt; color: #475569; }
+  .meta { border-top: 2px solid #c7d2fe; padding-top: 10pt; font-size: 10.5pt; }
+  .meta td { border: none; padding: 3pt 0; }
+  .meta td:first-child { width: 42mm; color: #64748b; }
+  .toc li { margin-bottom: 3pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ 1. TITULNÍ STRANA -->
+<section class="title-page">
+  <div class="title-top">
+    <div class="school">Univerzita Hradec Králové · Fakulta informatiky a managementu</div>
+    <div class="name">Ordinace Na Vyhlídce<br>Rezervační a evidenční systém</div>
+    <div class="sub">Technická dokumentace semestrálního projektu</div>
+  </div>
+  <table class="meta">
+    <tr><td>Předmět</td><td>Pokročilé programování (PPRO)</td></tr>
+    <tr><td>Zvolené zadání</td><td>Zadání A – Rezervace v ordinaci</td></tr>
+    <tr><td>Autor</td><td>[Jméno Příjmení]</td></tr>
+    <tr><td>Studijní obor</td><td>[studijní obor]</td></tr>
+    <tr><td>Akademický rok</td><td>2026/2027, zimní semestr</td></tr>
+    <tr><td>Repozitář</td><td>github.com/NovakGroup/ppro-clinic-reservation</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ OBSAH + 2. ÚVOD -->
+<section class="chapter">
+<h1>Obsah</h1>
+<ol class="toc">
+  <li>Titulní strana</li>
+  <li>Úvod</li>
+  <li>Datový model</li>
+  <li>Architektura</li>
+  <li>Použité technologie</li>
+  <li>Spuštění</li>
+  <li>Testy</li>
+  <li>Protokol o zacyklení</li>
+  <li>Přiznání práce s AI</li>
+</ol>
+
+<h1 style="margin-top:18pt">2. Úvod</h1>
+<h2>Klient a jeho problém</h2>
+<p>Klientem je soukromá praxe <b>Ordinace Na Vyhlídce</b> (MUDr. Jana Hrubá): tři lékaři na částečné úvazky, recepční paní Věra a zhruba devět set pacientů. Termíny se dnes zapisují tužkou do papírového diáře, volno se hledá listováním a výkony pro pojišťovnu se na konci měsíce ručně přepisují do tabulky – podle klientky to zabere celý podvečer. Dvakrát za poslední rok seděli v čekárně dva pacienti objednaní na stejný čas.</p>
+<h2>Co aplikace dělá</h2>
+<ul>
+  <li><b>Kartotéka pacientů</b> – jméno, příjmení, rok narození, telefon, číslo pojištěnce (rodné číslo) a pojišťovna; vyhledávání podle příjmení (i bez diakritiky), telefonu nebo RČ; ochrana proti duplicitám.</li>
+  <li><b>Lékaři a ordinační hodiny</b> – každý lékař má vlastní dny a časy; úterní odpoledne MUDr. Svobody na jiné adrese je v diáři blokované.</li>
+  <li><b>Rezervace</b> – recepce zakládá termín u konkrétního lékaře s poznámkou, proč pacient přichází. Systém nedovolí překryv ani termín mimo ordinační hodiny.</li>
+  <li><b>Přehled volných termínů</b> – denní pohled a týdenní mřížka volna pro zvoleného lékaře; kliknutím na volný slot se rovnou otevře rezervace.</li>
+  <li><b>Rušení a absence</b> – rozlišuje omluvené zrušení a nedostavení se bez omluvy; pacienti s opakovanými absencemi jsou označeni jako rizikoví.</li>
+  <li><b>Záznam o návštěvě</b> – k uskutečněné návštěvě se z číselníku vybírají výkony včetně počtu; body se ukládají v hodnotě platné v době výkonu.</li>
+  <li><b>Měsíční výkaz</b> – za zvolený měsíc a lékaře souhrn výkonů po pojišťovnách a součet bodů, export do CSV.</li>
+  <li><b>Výpadek lékaře</b> – evidence nepřítomnosti, zablokování diáře, seznam pacientů k obvolání a přeplánování.</li>
+</ul>
+<h2>Pro koho</h2>
+<p>Primárním uživatelem je recepce. Rozhraní je proto jednoduché, bez přihlašování na lokálním počítači, s velkými tlačítky a srozumitelnými hláškami v češtině („Musí to zvládnout paní Věra“). Funguje i na tabletu a mobilu (responzivní rozložení).</p>
+</section>
+
+<!-- ============================================================ 3. DATOVÝ MODEL -->
+<section class="chapter">
+<h1>3. Datový model</h1>
+<p>Model obsahuje <b>8 entit</b>. Vazba <b>M:N mezi návštěvou a výkonem</b> je realizována vazební entitou <code>VISIT_PROCEDURE</code>, která nese vlastní atributy <i>počet provedení</i> a <i>body v době výkonu</i>. V diagramu ji tvoří dvojice vztahů <code>VISIT ||--|{ VISIT_PROCEDURE }o--|| MEDICAL_PROCEDURE</code>.</p>
+<div class="fig"><img src="er.png" alt="ER diagram" style="width:100%;max-height:205mm;object-fit:contain"></div>
+<div class="caption">Obr. 1 – ER diagram (zdroj Mermaid je i v README.md). Vazba M:N: VISIT ↔ VISIT_PROCEDURE ↔ MEDICAL_PROCEDURE.</div>
+</section>
+
+<section class="chapter">
+<h2>Popis entit</h2>
+<table>
+  <tr><th style="width:24%">Entita</th><th>Význam a klíčové atributy</th></tr>
+  <tr><td><code>DOCTOR</code></td><td>Lékař ordinace: jméno, titul, specializace, kontakt.</td></tr>
+  <tr><td><code>DOCTOR_SCHEDULE</code></td><td>Jedno časové okno ordinačních hodin: den v týdnu (0 = pondělí), od–do a <code>location</code>. Okno s jiným místem než „Na Vyhlídce“ (úterní odpoledne MUDr. Svobody) se v diáři zobrazuje, ale nelze do něj objednávat. Check constrainty hlídají platný den a <code>start &lt; end</code>.</td></tr>
+  <tr><td><code>DOCTOR_ABSENCE</code></td><td>Nepřítomnost lékaře v konkrétní den (nemoc). Unikátní dvojice <code>(doctor_id, date)</code>.</td></tr>
+  <tr><td><code>PATIENT</code></td><td>Pacient: jméno, příjmení, rok narození, telefon, pojišťovna a <code>insurance_id</code> – rodné číslo v jednotném tvaru XXXXXX/XXXX, které je <b>unikátní</b> a slouží jako přirozený identifikátor.</td></tr>
+  <tr><td><code>APPOINTMENT</code></td><td>Rezervace: lékař, pacient, <code>start_at</code>, <code>end_at</code>, důvod, stav <code>PLANNED / COMPLETED / CANCELLED / NO_SHOW</code>. U zrušení se ukládá kdo rušil (<code>cancelled_by</code>: pacient / ordinace), kdy a proč; <code>patient_called</code> pro obvolávání při výpadku; <code>rescheduled_to_id</code> odkazuje na náhradní termín.</td></tr>
+  <tr><td><code>VISIT</code></td><td>Záznam o uskutečněné návštěvě, 1:1 k rezervaci (unikátní <code>appointment_id</code>), datum a lékařská poznámka.</td></tr>
+  <tr><td><code>MEDICAL_PROCEDURE</code></td><td>Číselník výkonů: unikátní kód, název, bodové ohodnocení.</td></tr>
+  <tr><td><code>VISIT_PROCEDURE</code></td><td><b>Vazební entita M:N</b>: návštěva, výkon, <code>count</code> (1–10) a <code>billed_points</code> – body platné v okamžiku zápisu, takže pozdější změna ceníku nemění historické výkazy.</td></tr>
+</table>
+
+<h2>Vazby</h2>
+<ul>
+  <li>Lékař 1 : N ordinační okna, 1 : N nepřítomnosti, 1 : N rezervace.</li>
+  <li>Pacient 1 : N rezervace (pacient chodí opakovaně).</li>
+  <li>Rezervace 1 : 0..1 návštěva (návštěva vznikne jen u uskutečněné rezervace).</li>
+  <li>Návštěva M : N výkon přes <code>VISIT_PROCEDURE</code> (na jedné návštěvě více výkonů, tentýž výkon u mnoha návštěv).</li>
+  <li>Rezervace 0..1 : 0..1 rezervace (přeplánováno na).</li>
+</ul>
+
+<h2>Integritní pravidla v databázi</h2>
+<p>Klíčová pravidla klienta jsou vynucena přímo databází, aby platila „ani omylem, ani ručně“:</p>
+<pre>ALTER TABLE appointment ADD CONSTRAINT ex_appointment_no_overlap
+EXCLUDE USING gist (doctor_id WITH =, tsrange(start_at, end_at) WITH &amp;&amp;)
+WHERE (status IN ('PLANNED', 'COMPLETED'));</pre>
+<ul>
+  <li><b>Exclusion constraint</b> zakáže dvě aktivní rezervace jednoho lékaře s překrývajícím se intervalem. <code>tsrange</code> je polootevřený interval <code>[začátek, konec)</code>, navazující termíny jsou tedy povolené. Zrušené rezervace se nepočítají – slot se uvolní.</li>
+  <li><b>Triggery</b> <code>trg_patient_no_delete</code>, <code>trg_appointment_no_delete</code>, <code>trg_visit_no_delete</code> odmítnou jakýkoli <code>DELETE</code> – „historie pacienta se nemaže“.</li>
+  <li><b>Unikátní indexy</b> na rodné číslo, kód výkonu a návštěvu k rezervaci; <b>check constrainty</b> na počet výkonu, rok narození a časové rozsahy.</li>
+</ul>
+</section>
+
+<!-- ============================================================ 4. ARCHITEKTURA -->
+<section class="chapter">
+<h1>4. Architektura</h1>
+<p>Aplikace je rozdělena do tří vrstev se závislostmi vedoucími jen shora dolů. Každá vrstva je samostatný Python balíček:</p>
+<pre>Prezentační vrstva   app/api/            FastAPI endpointy, DTO (Pydantic), mapování na JSON
+        │                                + frontend/index.html (UI recepce volá REST API)
+        ▼
+Aplikační vrstva     app/services/       případy užití: rezervace, návštěvy, výkazy, výpadek
+                     app/domain/         čistá pravidla (ordinační hodiny, překryv, RČ) a výjimky
+        ▼
+Datová vrstva        app/repositories/   jediné místo s DB dotazy (SQLAlchemy) + unit of work
+                     app/db/             ORM modely, připojení;  migrations/ – Alembic</pre>
+
+<h2>Prezentační vrstva</h2>
+<p>Endpointy v <code>app/api/routers/clinic.py</code> převezmou vstup, nechají Pydantic ověřit jeho formát (typy, délky, rozsahy), zavolají službu a výsledek převedou na DTO. Neobsahují žádné rozhodování ani SQL. Doménové výjimky (<code>BookingRuleError</code>, <code>ConflictError</code>…) převádí jeden handler v <code>app/main.py</code> na HTTP 422 / 409 / 404 s českou hláškou, kterou frontend zobrazí recepci. Webové rozhraní je jedna HTML stránka, která data jen načítá a odesílá – žádné obchodní pravidlo v ní není rozhodující.</p>
+
+<h2>Aplikační vrstva</h2>
+<p>Služby (<code>BookingService</code>, <code>PatientService</code>, <code>VisitService</code>, <code>ReportService</code>, <code>AbsenceService</code>, <code>CatalogService</code>) obsahují veškerou logiku: kontrolu ordinačních hodin, detekci překryvu, přechody stavů rezervace, sčítání a historizaci bodů, odvození roku narození z RČ. Nepoužívají FastAPI ani SQLAlchemy; s daty pracují přes <i>unit of work</i>, který jim předá sadu repozitářů. Aktuální datum dostávají jako závislost (<code>Clock</code>), takže testy nejsou závislé na skutečném dni. Čistá pravidla bez stavu jsou vyčleněná v <code>app/domain/rules.py</code>.</p>
+<p>Souběh dvou recepcí řeší služba zámkem řádku lékaře (<code>SELECT … FOR UPDATE</code>) před kontrolou překryvu; databázový exclusion constraint je druhá pojistka.</p>
+
+<h2>Datová vrstva</h2>
+<p>Repozitáře v <code>app/repositories/sql.py</code> jsou jediné místo, kde vznikají dotazy. Agregace pro výkaz počítá databáze (<code>GROUP BY</code> přes vazbu M:N). Chyby integrity (porušený exclusion constraint, duplicitní RČ) repozitář převede na doménovou <code>ConflictError</code>. Schéma vzniká výhradně migracemi Alembic, které se spouští při startu kontejneru.</p>
+
+<h2>Jak je zajištěno, že závislosti vedou jedním směrem</h2>
+<ul>
+  <li><b>Kompoziční kořen</b> <code>app/container.py</code> je jediné místo, které zná všechny vrstvy a skládá je: vytvoří session, unit of work a službu. Prezentační vrstva dostává hotovou službu přes FastAPI <code>Depends</code>.</li>
+  <li><b>Architektonický test</b> <code>tests/unit/test_architecture.py</code> projde importy všech modulů a selže, pokud např. <code>app/api</code> importuje <code>app.repositories</code>, <code>app.db</code> nebo <code>sqlalchemy</code>, pokud služby importují FastAPI či SQLAlchemy, nebo pokud prezentační vrstva obsahuje SQL klíčová slova.</li>
+  <li><b>Jednotkové testy služeb</b> běží nad in-memory repozitáři – kdyby služba sahala přímo do databáze, testy by bez databáze nešly spustit.</li>
+</ul>
+
+<h2>Přehled REST API</h2>
+<table>
+  <tr><th>Metoda a cesta</th><th>Účel</th></tr>
+  <tr><td><code>GET /api/doctors</code>, <code>GET /api/procedures</code></td><td>lékaři s ordinačními hodinami, číselník výkonů</td></tr>
+  <tr><td><code>GET/POST /api/patients</code></td><td>vyhledání (<code>?q=</code>) se statistikou spolehlivosti, založení karty</td></tr>
+  <tr><td><code>GET/POST /api/appointments</code></td><td>seznam rezervací, nová rezervace / přeplánování</td></tr>
+  <tr><td><code>POST /api/appointments/{id}/cancel | no-show | complete | called</code></td><td>změny stavu rezervace</td></tr>
+  <tr><td><code>GET /api/availability?doctor_id&amp;week_of</code></td><td>týdenní přehled volných slotů</td></tr>
+  <tr><td><code>GET/PUT /api/appointments/{id}/visit</code></td><td>záznam o návštěvě a výkony</td></tr>
+  <tr><td><code>GET /api/reports/monthly(.csv)?month&amp;doctor_id</code></td><td>měsíční výkaz, export CSV</td></tr>
+  <tr><td><code>GET/POST/DELETE /api/absences</code>, <code>GET /api/absences/affected</code></td><td>nepřítomnost lékaře a dotčené termíny</td></tr>
+</table>
+<p>Úplná interaktivní dokumentace je po spuštění na <code>http://localhost:8000/docs</code>.</p>
+</section>
+
+<!-- ============================================================ 5. TECHNOLOGIE + 6. SPUŠTĚNÍ -->
+<section class="chapter">
+<h1>5. Použité technologie</h1>
+<table>
+  <tr><th style="width:28%">Technologie</th><th>Proč byla zvolena</th></tr>
+  <tr><td>Python 3.12</td><td>Čitelný jazyk s malým množstvím šablonovitého kódu, který se dobře vysvětluje u obhajoby.</td></tr>
+  <tr><td>FastAPI</td><td>Deklarativní endpointy, dependency injection pro skládání vrstev a automatická OpenAPI/Swagger dokumentace.</td></tr>
+  <tr><td>Pydantic 2</td><td>Validace formátu vstupních DTO na hranici prezentační vrstvy.</td></tr>
+  <tr><td>PostgreSQL 16</td><td>Exclusion constraint nad časovými intervaly vynutí zákaz překryvu rezervací přímo v databázi; plnohodnotné transakce a zámky.</td></tr>
+  <tr><td>SQLAlchemy 2</td><td>ORM i explicitní dotazy na jednom místě (repozitáře), přenositelné mezi databázemi pro testy.</td></tr>
+  <tr><td>Alembic</td><td>Verzované migrace schématu, spouštěné automaticky při startu.</td></tr>
+  <tr><td>pytest</td><td>Jednoduché jednotkové i integrační testy s fixtures.</td></tr>
+  <tr><td>Docker, Docker Compose</td><td>Celé prostředí (databáze, aplikace, testy) se spustí jedním příkazem bez ruční instalace.</td></tr>
+  <tr><td>HTML, Tailwind CSS, JavaScript</td><td>Jednoduché responzivní rozhraní pro recepci bez build kroku a bez dalšího frameworku.</td></tr>
+</table>
+
+<h1 style="margin-top:16pt">6. Spuštění</h1>
+<h2>Prerekvizity</h2>
+<ul>
+  <li>Docker Desktop (nebo Docker Engine) s Docker Compose v2.</li>
+  <li>Git. Volný port 8000 (lze změnit proměnnou <code>APP_PORT</code>).</li>
+</ul>
+<h2>Postup</h2>
+<pre>git clone https://github.com/NovakGroup/ppro-clinic-reservation.git
+cd ppro-clinic-reservation
+docker compose up --build</pre>
+<p>Kontejner <code>app</code> po startu databáze automaticky provede migrace (<code>alembic upgrade head</code>), do prázdné databáze vloží syntetická testovací data (<code>python -m app.seed</code>) a spustí webový server. Žádný další ruční krok není potřeba. Soubor <code>.env</code> je nepovinný – <code>docker-compose.yml</code> má výchozí hodnoty; pro vlastní heslo k lokální databázi stačí zkopírovat <code>.env.example</code> na <code>.env</code>.</p>
+<h2>Adresy služeb</h2>
+<table>
+  <tr><th>Služba</th><th>Adresa</th></tr>
+  <tr><td>Webové rozhraní recepce</td><td><code>http://localhost:8000</code></td></tr>
+  <tr><td>Swagger UI (API)</td><td><code>http://localhost:8000/docs</code></td></tr>
+  <tr><td>Health check</td><td><code>http://localhost:8000/health</code></td></tr>
+  <tr><td>PostgreSQL</td><td>jen uvnitř Docker sítě (služba <code>db</code>, port 5432)</td></tr>
+</table>
+<h2>Přihlašovací údaje a testovací data</h2>
+<p>Aplikace v této verzi nemá přihlašování (rozhodnutí: rezervace zakládá jen recepce na lokálním počítači). Databáze používá výchozí lokální účet <code>clinic</code> / <code>change-me-local-only</code> z <code>docker-compose.yml</code>, dostupný jen uvnitř Docker sítě.</p>
+<p>Testovací data jsou smyšlená: 3 lékaři s rozdílnými ordinačními hodinami (MUDr. Hrubá Po/Út/St/Pá dopoledne, MUDr. Svoboda Po/Út/Čt s úterním odpolednem na externím pracovišti, MUDr. Černá St–Pá), 8 pacientů (paní Krátká s historií 2 zrušení a 3 absencí), 6 výkonů v číselníku a rezervace vztažené k aktuálnímu týdnu. Reset dat: <code>docker compose down -v &amp;&amp; docker compose up</code>.</p>
+</section>
+
+<!-- ============================================================ 7. TESTY -->
+<section class="chapter">
+<h1>7. Testy</h1>
+<h2>Spuštění</h2>
+<pre>docker compose run --rm test-unit          # 58 jednotkových testů, bez databáze
+docker compose run --rm test-integration   # 12 integračních testů proti PostgreSQL</pre>
+<p>Integrační testy používají samostatnou databázi <code>db-test</code> (data jen v paměti kontejneru). Schéma vytvoří stejné migrace jako v provozu a před každým testem se data vyprázdní a znovu vloží seed. Datum „dnes“ je v testech pevné (30. 10. 2026), aby výsledky nezávisely na dni spuštění.</p>
+
+<h2>Co je otestované</h2>
+<table>
+  <tr><th style="width:30%">Oblast</th><th>Testy</th></tr>
+  <tr><td>Doménová pravidla<br><code>tests/unit/test_rules.py</code></td><td>Překryv polootevřených intervalů (navazující termíny, částečný a vnořený překryv); ordinační hodiny – konec přesně v čase konce ordinace, mimo hodiny, mimo 15min mřížku, víkend, minulost, nepřítomnost, den bez ordinace, externí pracoviště i termín do něj zasahující, neplatná délka; generování slotů; rodné číslo (normalizace, kontrolní číslice, neplatný měsíc), rok narození z RČ; telefon; limit počtu výkonů.</td></tr>
+  <tr><td>Aplikační služby<br><code>tests/unit/test_services.py</code></td><td>Založení rezervace a zamčení lékaře, odmítnutí kolize, povolený navazující termín i stejný čas u jiného lékaře, uvolnění slotu zrušením, zákaz zrušení odbavené návštěvy, zákaz absence a odbavení dopředu, přeplánování (zrušení původního bez penalizace pacienta, i na překrývající se čas téhož lékaře), týdenní přehled volna; duplicitní RČ, nesoulad roku narození; výkon k neuskutečněné návštěvě, sčítání stejných výkonů, limit, historizace bodů po změně ceníku, návštěva bez výkonu.</td></tr>
+  <tr><td>Architektura<br><code>tests/unit/test_architecture.py</code></td><td>Směr závislostí mezi vrstvami a absence SQL v prezentační vrstvě.</td></tr>
+  <tr><td>Integrace s DB<br><code>tests/integration/test_api_db.py</code></td><td>Seed a číselníky přes API; rezervace a kolize přes API (201/409); mimo ordinační hodiny (422); <b>exclusion constraint</b> odmítne ručně vložený překryv; <b>trigger</b> odmítne smazání pacienta; <b>souběh</b> – dvě vlákna ukládají stejný slot, projde právě jedno; odbavení, výkony a měsíční výkaz včetně CSV; statistika spolehlivosti; nepřítomnost lékaře a přeplánování; týdenní přehled; validace pacienta; termín v minulosti.</td></tr>
+</table>
+<h2>Ruční a end-to-end ověření</h2>
+<p>Kromě automatických testů bylo webové rozhraní ověřeno scénářem v prohlížeči (Playwright) proti běžícímu serveru: 31 kroků od založení rezervace přes týdenní přehled, kartotéku, odbavení a výkaz až po výpadek lékaře, včetně kontroly, že text z dat nespustí vložený skript (XSS). Tento skript není součástí repozitáře, protože vyžaduje Node.js mimo Docker prostředí projektu.</p>
+</section>
+
+<!-- ============================================================ 8. PROTOKOL O ZACYKLENÍ -->
+<section class="chapter">
+<h1>8. Protokol o zacyklení</h1>
+<div class="note">Vychází ze skutečné historie repozitáře (commity <code>b1d506d</code> a <code>55bd229</code> z 30. 10. 2026). Před odevzdáním zkontrolujte a doplňte místa v hranatých závorkách.</div>
+<h2>Situace</h2>
+<p>V prvním prototypu rozhraní měl agent (Antigravity) zařídit, aby se v denním diáři správně zobrazovaly rezervace delší než jeden 15minutový slot – např. rezervace pana Vomáčky 08:45–09:15 má obsadit sloty 08:45 a 09:00. Agent dodal opravu v 11:51 (commit <code>b1d506d</code> „block overlapping slots for multi-slot appointments“) a o necelou hodinu později další (commit <code>55bd229</code> „also block end-time slot … 09:15 correctly blocked“). Obě verze se daly normálně proklikat a diář na první pohled vypadal v pořádku. [Doplňte, jak jste druhou opravu agentovi zadali.]</p>
+<h2>Podle čeho se poznalo, že je řešení špatně</h2>
+<p>Prvním signálem byla už zpráva druhého commitu: agent v ní tvrdí, že slot 09:15 je „správně zablokovaný“. Jenže v 09:15 pan Vomáčka v ordinaci není – jeho termín v 09:15 končí. Potvrdilo se to při nezávislé revizi a testu prototypu jiným nástrojem (Claude): počítadlo kapacity ukazovalo na pondělí 9 obsazených slotů z 18, přitom reálně obsazených bylo 5, a pacienta nešlo objednat na 08:30 hned po paní Krátké (08:15–08:30) – systém hlásil kolizi s termínem, který v tu chvíli už skončil.</p>
+<h2>Kde byla příčina</h2>
+<p>Intervaly se porovnávaly podmínkou <code>aEnd &gt;= slotStart</code> místo <code>aEnd &gt; slotStart</code>, takže konec termínu se považoval za jeho součást. Druhá „oprava“ chybu nezmenšila, ale rozšířila – stejnou nerovnost přidala i do kontroly kolize při ukládání a v komentáři ji označila za záměr. Agent tedy na připomínku k jednomu symptomu reagoval další záplatou na stejném místě, místo aby se vrátil k pravidlu, které má platit.</p>
+<h2>Čím se to rozseklo</h2>
+<ol>
+  <li>Pravidlo se napsalo slovy: termín je interval <code>[začátek, konec)</code>, termíny smí navazovat, 08:15–08:30 a 08:30–08:45 se nepřekrývají. Zapsalo se do README jako rozhodnutí k otevřenému bodu „délka termínu“.</li>
+  <li>Překryv počítá jediná funkce <code>overlaps()</code> v doménové vrstvě, kterou používá jak přehled volna, tak kontrola kolize – už ne dvě různé podmínky na dvou místech.</li>
+  <li>K funkci vznikly jednotkové testy přesně na hraniční případ (navazující termíny, částečný a vnořený překryv). S chybnou nerovností <code>&gt;=</code> by test navazujících termínů selhal.</li>
+  <li>V databázi pravidlo hlídá exclusion constraint nad <code>tsrange</code>, který je polootevřený už z definice – stejná chyba se tak nemůže vrátit ani při zápisu mimo aplikaci.</li>
+</ol>
+<h2>Poučení</h2>
+<p>Agent je ochotný „opravit“ cokoli, co se mu označí jako chyba, i směrem, který chybu zhoršuje, a sebejistě to popíše v commitu. Když výsledek vypadá jen „trochu divně“, je potřeba ho zkontrolovat proti pravidlu a číslům (kapacita 9 vs. 5), ne proti dojmu, a hraniční případ mít v testu dřív, než se přijme další verze téže opravy.</p>
+<p><b>Menší druhý případ:</b> při nahrávání změn na GitHub agent několikrát po sobě zopakoval <code>git push</code>, který pokaždé skončil stejnou chybou 403 (session neměla k repozitáři oprávnění). Signálem byla identická chybová hláška; vyřešilo se to změnou cesty – soubory se nahrály přes webové rozhraní GitHubu a změny prošly pull requestem.</p>
+</section>
+
+<!-- ============================================================ 9. PŘIZNÁNÍ PRÁCE S AI -->
+<section class="chapter">
+<h1>9. Přiznání práce s AI</h1>
+<div class="note">Doplňte prosím přesně, co jste dělali v Antigravity a co sami – tabulka níže popisuje stav k 30. 10. 2026.</div>
+<h2>Použité nástroje</h2>
+<table>
+  <tr><th style="width:26%">Nástroj</th><th>Na co byl použit</th></tr>
+  <tr><td>Google Antigravity</td><td>Úvodní struktura repozitáře, pravidla spolupráce s agentem (<code>agent.md</code>), první návrh README a datového modelu, první klikací prototyp UI (commity z 30. 10. 2026 dopoledne).</td></tr>
+  <tr><td>Claude (Anthropic, aplikace Cowork)</td><td>Revize prototypu a seznam chyb, jejich oprava; návrh a implementace backendu ve třech vrstvách (FastAPI, SQLAlchemy, Alembic), migrace včetně exclusion constraintu a triggerů, napojení frontendu na REST API, týdenní přehled volna, Docker Compose, jednotkové a integrační testy, tato dokumentace.</td></tr>
+</table>
+<h2>Jak byl výsledek ověřen</h2>
+<ul>
+  <li><b>Automatické testy:</b> 58 jednotkových a 12 integračních testů proti skutečné PostgreSQL; všechny procházejí.</li>
+  <li><b>Pravidla v databázi:</b> ručně ověřeno, že přímý <code>INSERT</code> překrývající se rezervace i <code>DELETE</code> pacienta databáze odmítne (to samé pokrývají integrační testy).</li>
+  <li><b>Scénář v prohlížeči:</b> 31 kroků end-to-end proti běžícímu serveru, včetně chybových stavů a pokusu o XSS.</li>
+  <li><b>Kontrola proti zadání:</b> každý požadavek z části „Co klient chce“ a „Na čem klient trvá“ byl porovnán s implementací (tabulka pravidel v README).</li>
+  <li><b>Revize kódu autorem:</b> [doplňte, které části jste prošli a čemu rozumíte – u obhajoby se bude měnit kód na místě].</li>
+</ul>
+<h2>Co AI nedělala</h2>
+<ul>
+  <li>Volbu zadání, rozhodnutí k otevřeným bodům a jejich schválení s klientem/vyučujícím.</li>
+  <li>Žádná reálná osobní data – všechna jména, rodná čísla a telefony jsou smyšlené. Do agenta nebyl vložen žádný firemní kód ani interní dokument.</li>
+  <li>V repozitáři nejsou žádné skutečné přihlašovací údaje; heslo k lokální databázi je jen vývojová výchozí hodnota a <code>.env</code> je v <code>.gitignore</code>.</li>
+</ul>
+</section>
+
+</body>
+</html>
