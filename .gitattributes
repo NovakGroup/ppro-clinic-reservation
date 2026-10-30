@@ -1,0 +1,6 @@
+# Shell skripty a Dockerfile musí mít vždy unixové konce řádků (LF), jinak v Linux kontejneru nejdou spustit.
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.png binary
+*.pdf binary
