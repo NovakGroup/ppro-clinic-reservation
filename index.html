@@ -16,14 +16,14 @@
 
   <!-- ================= ČISTÁ, VYSOCE KONTRASTNÍ HORNÍ NAVIGACE ================= -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between gap-4">
         
         <!-- Levá část: Hamburger pro mobil + Logo + Textové taby bez emoji -->
-        <div class="flex items-center gap-6">
+        <div class="flex min-w-0 items-center gap-4 xl:gap-6">
           
           <!-- Tlačítko pro mobil -->
-          <button type="button" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none">
+          <button type="button" onclick="toggleMobileNav()" class="xl:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none">
             <span class="sr-only">Otevřít menu</span>
             <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -31,21 +31,18 @@
           </button>
 
           <!-- Identita ordinace -->
-          <div class="flex items-center gap-3">
-            <div class="size-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm font-black text-base">
+          <div class="flex shrink-0 items-center gap-2.5">
+            <div class="size-9 shrink-0 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white shadow-sm font-black text-lg leading-none">
               +
             </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-900 tracking-tight">Ordinace Na Vyhlídce</span>
-                <span class="hidden sm:inline-block rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border border-indigo-200">Praxe</span>
-              </div>
-              <p class="text-[11px] text-slate-500 font-medium">Informační a rezervační systém</p>
+            <div class="leading-tight whitespace-nowrap">
+              <span class="block text-sm font-extrabold text-slate-900 tracking-tight">Ordinace Na Vyhlídce</span>
+              <span class="hidden sm:block text-[11px] text-slate-500 font-medium">Rezervační systém</span>
             </div>
           </div>
 
           <!-- Hlavní taby (Desktop) – čisté, skvěle čitelné bez emoji -->
-          <nav class="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-200 whitespace-nowrap">
+          <nav class="hidden xl:flex items-center gap-1 pl-4 border-l border-slate-200 whitespace-nowrap">
             <button onclick="switchTab('calendar')" id="tab-calendar-btn" class="px-3.5 py-2 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 transition">
               Diář & Rezervace
             </button>
@@ -65,21 +62,21 @@
         </div>
 
         <!-- Pravá část: Akční tlačítko + Profil paní Věry -->
-        <div class="flex items-center gap-3">
+        <div class="flex shrink-0 items-center gap-3">
           
-          <button type="button" onclick="openBookingModal()" class="whitespace-nowrap flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95">
+          <button type="button" onclick="openBookingModal()" title="Nová rezervace" class="whitespace-nowrap flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95">
             <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2.25" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span>Nová rezervace</span>
+            <span class="hidden sm:inline">Nová rezervace</span>
           </button>
 
           <!-- Profil paní Věry (Recepce) -->
-          <div class="hidden xl:flex items-center gap-2.5 pl-3 border-l border-slate-200">
-            <div class="size-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 text-xs">
+          <div class="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-200" title="Přihlášena: Věra Kovářová (Recepce)">
+            <div class="size-9 shrink-0 rounded-full bg-indigo-50 ring-2 ring-white outline outline-1 outline-indigo-200 flex items-center justify-center font-bold text-indigo-700 text-xs">
               VK
             </div>
-            <div class="text-left leading-tight">
+            <div class="hidden 2xl:block text-left leading-tight whitespace-nowrap">
               <p class="text-xs font-bold text-slate-900">Věra Kovářová</p>
               <p class="text-[10px] text-slate-500 font-medium">Recepce</p>
             </div>
@@ -90,7 +87,7 @@
     </div>
 
     <!-- Mobilní rozbalovací nabídka (čistá, bílá, vysoký kontrast) -->
-    <div id="mobile-nav-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 shadow-lg">
+    <div id="mobile-nav-menu" class="hidden xl:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 shadow-lg">
       <button id="mtab-calendar-btn" onclick="switchTab('calendar'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50">
         Diář & Rezervace
       </button>
