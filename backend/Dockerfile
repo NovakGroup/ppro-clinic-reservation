@@ -11,7 +11,8 @@ RUN pip install -r requirements.txt
 
 COPY backend/ /app/
 COPY frontend/ /app/frontend/
-RUN chmod +x /app/entrypoint.sh
+# Odstraní případné windowsové konce řádků (CRLF), jinak skript v Linuxu nejde spustit
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 CMD ["/app/entrypoint.sh"]
