@@ -1,100 +1,87 @@
 <!DOCTYPE html>
-<html lang="cs" class="h-full bg-gray-100">
+<html lang="cs" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ordinace Na Vyhlídce – Informační systém</title>
+  <title>Ordinace Na Vyhlídce – Rezervační systém</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Tailwind Plus Elements -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
-<body class="h-full flex flex-col antialiased text-gray-900">
+<body class="h-full flex flex-col antialiased text-slate-800 bg-slate-50">
 
-  <!-- ================= TOP NAVIGATION (TAILWIND UI DARK NAVBAR) ================= -->
-  <nav class="relative bg-gray-800 dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10 shadow-sm sticky top-0 z-40">
+  <!-- ================= ČISTÁ, VYSOCE KONTRASTNÍ HORNÍ NAVIGACE ================= -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 justify-between">
+      <div class="flex h-16 items-center justify-between gap-4">
         
-        <!-- Levá část: Hamburger + Logo + Odkazy -->
-        <div class="flex">
-          <div class="mr-2 -ml-2 flex items-center md:hidden">
-            <!-- Mobile menu button -->
-            <button type="button" onclick="toggleTopMobileMenu()" class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
-              <span class="sr-only">Otevřít hlavní menu</span>
-              <svg id="hamburger-icon" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            </button>
-          </div>
+        <!-- Levá část: Hamburger pro mobil + Logo + Textové taby bez emoji -->
+        <div class="flex items-center gap-6">
+          
+          <!-- Tlačítko pro mobil -->
+          <button type="button" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none">
+            <span class="sr-only">Otevřít menu</span>
+            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
 
-          <!-- Logo ordinace -->
-          <div class="flex shrink-0 items-center gap-2.5">
-            <div class="size-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
+          <!-- Identita ordinace -->
+          <div class="flex items-center gap-3">
+            <div class="size-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm font-black text-base">
               +
             </div>
             <div>
-              <span class="text-sm font-bold text-white tracking-tight">Na Vyhlídce</span>
-              <span class="hidden sm:inline-block ml-1.5 rounded bg-indigo-900/60 text-indigo-300 text-[10px] font-semibold px-1.5 py-0.5">Ordinace</span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-900 tracking-tight">Ordinace Na Vyhlídce</span>
+                <span class="hidden sm:inline-block rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border border-indigo-200">Praxe</span>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium">Informační a rezervační systém</p>
             </div>
           </div>
 
-          <!-- Hlavní navigační taby (Desktop) -->
-          <div class="hidden md:ml-6 md:flex md:items-center md:space-x-2">
-            <button onclick="switchTab('calendar')" id="top-nav-calendar" class="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white transition">
-              📅 Diář & Rezervace
+          <!-- Hlavní taby (Desktop) – čisté, skvěle čitelné bez emoji -->
+          <nav class="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-200">
+            <button onclick="switchTab('calendar')" id="tab-calendar-btn" class="px-3.5 py-2 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 transition">
+              Diář & Rezervace
             </button>
-            <button onclick="switchTab('patients')" id="top-nav-patients" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition">
-              👥 Kartotéka pacientů
+            <button onclick="switchTab('patients')" id="tab-patients-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+              Kartotéka pacientů
             </button>
-            <button onclick="switchTab('visit')" id="top-nav-visit" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition">
-              🩺 Odbavení & Výkony
+            <button onclick="switchTab('visit')" id="tab-visit-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+              Odbavení & Výkony
             </button>
-            <button onclick="switchTab('billing')" id="top-nav-billing" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition">
-              📊 Měsíční výkazy
+            <button onclick="switchTab('billing')" id="tab-billing-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+              Měsíční výkazy
             </button>
-            <button onclick="switchTab('absence')" id="top-nav-absence" class="rounded-md px-3 py-2 text-sm font-medium text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition">
-              ⚠️ Výpadek lékaře
+            <button onclick="switchTab('absence')" id="tab-absence-btn" class="px-3.5 py-2 rounded-lg text-xs font-bold text-rose-700 bg-rose-50/70 hover:bg-rose-100 border border-rose-200 transition">
+              Výpadek lékaře
             </button>
-          </div>
+          </nav>
         </div>
 
-        <!-- Pravá část: Akční tlačítko + Notifikace + Profil -->
+        <!-- Pravá část: Akční tlačítko + Profil paní Věry -->
         <div class="flex items-center gap-3">
           
-          <!-- Rychlá nová rezervace (v originále New Job) -->
-          <div class="shrink-0">
-            <button type="button" onclick="openBookingModal()" class="relative inline-flex items-center gap-x-1.5 rounded-md bg-indigo-500 px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-              <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5">
-                <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-              </svg>
-              <span>Nová rezervace</span>
-            </button>
-          </div>
+          <button type="button" onclick="openBookingModal()" class="flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95">
+            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2.25" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>Nová rezervace</span>
+          </button>
 
-          <div class="hidden md:flex md:shrink-0 md:items-center gap-3">
-            <!-- Zvoneček notifikací -->
-            <button type="button" onclick="alert('Žádná nová systémová hlášení.')" class="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500">
-              <span class="sr-only">Notifikace</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-6">
-                <path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
-
-            <!-- Uživatelský profil (Recepce) -->
-            <div class="relative flex items-center gap-2.5 pl-2 border-l border-gray-700">
-              <div class="size-8 rounded-full bg-indigo-700 flex items-center justify-center text-white text-xs font-bold outline -outline-offset-1 outline-white/10">
-                VK
-              </div>
-              <div class="hidden xl:block text-left leading-tight">
-                <div class="text-xs font-semibold text-white">Věra Kovářová</div>
-                <div class="text-[10px] text-gray-400">Recepce ordinace</div>
-              </div>
+          <!-- Profil paní Věry (Recepce) -->
+          <div class="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-200">
+            <div class="size-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-700 text-xs">
+              VK
+            </div>
+            <div class="text-left leading-tight">
+              <p class="text-xs font-bold text-slate-900">Věra Kovářová</p>
+              <p class="text-[10px] text-slate-500 font-medium">Recepce</p>
             </div>
           </div>
         </div>
@@ -102,94 +89,87 @@
       </div>
     </div>
 
-    <!-- Mobilní menu (Dropdown) -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-gray-700 bg-gray-800 pb-3 pt-2">
-      <div class="space-y-1 px-2 sm:px-3">
-        <button onclick="switchTab('calendar'); toggleTopMobileMenu();" class="block w-full text-left rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white">
-          📅 Diář & Rezervace
-        </button>
-        <button onclick="switchTab('patients'); toggleTopMobileMenu();" class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-white/5 hover:text-white">
-          👥 Kartotéka pacientů
-        </button>
-        <button onclick="switchTab('visit'); toggleTopMobileMenu();" class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-white/5 hover:text-white">
-          🩺 Odbavení & Výkony
-        </button>
-        <button onclick="switchTab('billing'); toggleTopMobileMenu();" class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-white/5 hover:text-white">
-          📊 Měsíční výkazy
-        </button>
-        <button onclick="switchTab('absence'); toggleTopMobileMenu();" class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-rose-300 hover:bg-rose-950/40">
-          ⚠️ Výpadek lékaře
-        </button>
-      </div>
-      <div class="border-t border-gray-700 pt-4 pb-2 px-4 flex items-center justify-between text-gray-300 text-xs">
-        <div>
-          <div class="font-semibold text-white">Věra Kovářová (Recepce)</div>
-          <div class="text-gray-400">Ordinace Na Vyhlídce</div>
-        </div>
+    <!-- Mobilní rozbalovací nabídka (čistá, bílá, vysoký kontrast) -->
+    <div id="mobile-nav-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 shadow-lg">
+      <button onclick="switchTab('calendar'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50">
+        Diář & Rezervace
+      </button>
+      <button onclick="switchTab('patients'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100">
+        Kartotéka pacientů
+      </button>
+      <button onclick="switchTab('visit'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100">
+        Odbavení & Výkony
+      </button>
+      <button onclick="switchTab('billing'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100">
+        Měsíční výkazy
+      </button>
+      <button onclick="switchTab('absence'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50">
+        Výpadek lékaře
+      </button>
+      <div class="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-xs text-slate-500">
+        <span>Přihlášen: <strong>Věra Kovářová (Recepce)</strong></span>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <!-- ================= HLAVNÍ OBSAHOVÁ PLOCHA (MAX-W-7XL) ================= -->
-  <main class="flex-1 py-8">
+  <!-- ================= HLAVNÍ PLOCHA ================= -->
+  <main class="flex-1 py-6 sm:py-8">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
       <!-- ================= 1. TAB: DIÁŘ & KALENDÁŘ ================= -->
       <section id="tab-calendar" class="space-y-6">
         
-        <!-- Horní panel filtrů: Výběr lékaře, ordinační doba a statistika kapacity -->
-        <div class="bg-white rounded-xl shadow-xs ring-1 ring-gray-900/5 p-5 flex flex-wrap items-center justify-between gap-4">
+        <!-- Ovládací lišta: Lékař, Den, Kapacita -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex flex-wrap items-center justify-between gap-4">
           
-          <!-- Přepínač lékařů -->
+          <!-- Výběr lékaře -->
           <div class="flex items-center gap-3">
-            <label class="text-xs font-semibold text-gray-700">Lékař:</label>
-            <div class="relative">
-              <select id="doctor-picker-select" onchange="changeDoctor(this.value)" class="rounded-md bg-white px-3 py-2 text-xs font-bold text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
-                <option value="1">MUDr. Jana Hrubá (Praktický lékař)</option>
-                <option value="2">MUDr. Petr Svoboda (Interna)</option>
-                <option value="3">MUDr. Eva Černá (Kardiologie)</option>
-              </select>
-            </div>
-            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20" id="doctor-status-badge">
-              ● Na pracovišti
+            <span class="text-xs font-bold text-slate-700">Lékař:</span>
+            <select id="doctor-picker-select" onchange="changeDoctor(this.value)" class="rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
+              <option value="1">MUDr. Jana Hrubá (Praktický lékař)</option>
+              <option value="2">MUDr. Petr Svoboda (Interna)</option>
+              <option value="3">MUDr. Eva Černá (Kardiologie)</option>
+            </select>
+            <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+              ● V ordinaci
             </span>
           </div>
 
-          <!-- Denní přepínač -->
+          <!-- Posun dnů -->
           <div class="flex items-center gap-2">
-            <button onclick="alert('Předchozí den')" class="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">◀</button>
-            <span class="text-xs font-bold text-gray-900 px-2" id="current-date-label">Pondělí, 26. října 2026</span>
-            <button onclick="alert('Následující den')" class="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">▶</button>
+            <button onclick="alert('Posun o den zpět')" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">◀</button>
+            <span class="text-xs font-bold text-slate-900 px-2" id="current-date-label">Pondělí, 26. října 2026</span>
+            <button onclick="alert('Posun o den dopředu')" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">▶</button>
           </div>
 
-          <!-- Kapacita slotů -->
-          <div class="flex items-center gap-3">
-            <span class="text-xs text-gray-500">Dnešní obsazenost:</span>
-            <span class="font-bold text-xs text-gray-900" id="calendar-capacity-counter">4 / 18 slotů</span>
-            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10" id="calendar-free-counter">14 volných</span>
+          <!-- Přehled kapacity -->
+          <div class="flex items-center gap-2.5 text-xs">
+            <span class="text-slate-500 font-medium">Kapacita:</span>
+            <span class="font-bold text-slate-900" id="calendar-capacity-counter">4 / 18 slotů</span>
+            <span class="rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 font-bold" id="calendar-free-counter">14 volných</span>
           </div>
         </div>
 
         <!-- Upozornění na ordinační dobu -->
-        <div class="rounded-xl bg-amber-50 p-4 border border-amber-200 flex items-start gap-3 text-xs text-amber-900">
-          <span class="text-base">⚠️</span>
+        <div class="rounded-xl bg-amber-50/90 border border-amber-200 p-4 flex items-start gap-3 text-xs text-amber-950">
+          <span class="font-bold text-amber-700">Pravidlo:</span>
           <div>
-            <strong>Obchodní pravidlo:</strong> Rezervaci nelze založit mimo ordinační hodiny. MUDr. Petr Svoboda v úterý odpoledne ordinuje na jiné adrese – systém tyto termíny trvale blokuje.
+            Rezervaci nelze založit mimo platné ordinační hodiny. MUDr. Petr Svoboda ordinuje v úterý odpoledne na jiné adrese – systém tyto termíny v diáři blokuje.
           </div>
         </div>
 
-        <!-- Mřížka slotů diáře (15 minut) -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-900/5">
-          <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/60 flex items-center justify-between">
+        <!-- Mřížka slotů po 15 min -->
+        <div class="overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
             <div>
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-700">Harmonogram ordinace – Časové sloty po 15 minutách</h3>
-              <p class="text-[11px] text-gray-500 mt-0.5">Zákaz překryvu: Systém nedovolí dvě rezervace na stejný termín u stejného lékaře</p>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Denní harmonogram termínů (Mřížka po 15 minutách)</h3>
+              <p class="text-[11px] text-slate-500 mt-0.5">Zákaz kolize: Systém nikdy nedovolí dvě rezervace na stejný čas u jednoho lékaře</p>
             </div>
-            <button onclick="openBookingModal()" class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 shadow-xs">
-              + Zapsat termín
+            <button onclick="openBookingModal()" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 shadow-xs">
+              + Zapsat pacienta
             </button>
           </div>
-          <ul role="list" class="divide-y divide-gray-100" id="calendar-slots-list">
+          <ul role="list" class="divide-y divide-slate-100" id="calendar-slots-list">
             <!-- Dynamické řádky slotů -->
           </ul>
         </div>
@@ -197,37 +177,37 @@
 
       <!-- ================= 2. TAB: KARTOTÉKA PACIENTŮ ================= -->
       <section id="tab-patients" class="hidden space-y-6">
-        <div class="bg-white rounded-xl shadow-xs ring-1 ring-gray-900/5 p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex flex-wrap items-center justify-between gap-4">
           <div class="flex-1 max-w-md relative">
             <input 
               type="text" 
               id="patient-search-input"
               oninput="handleSearch(this.value)"
-              placeholder="Vyhledat pacienta podle příjmení, telefonu nebo RČ..." 
-              class="block w-full rounded-md bg-white px-3 py-2 pl-9 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+              placeholder="Hledat pacienta podle příjmení, telefonu nebo RČ..." 
+              class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 pl-9 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-none"
             >
-            <svg class="pointer-events-none absolute left-3 top-2.5 size-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="pointer-events-none absolute left-3 top-2.5 size-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
             </svg>
           </div>
-          <button onclick="openNewPatientModal()" class="rounded-md bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500">
+          <button onclick="openNewPatientModal()" class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700">
             + Založit kartu pacienta
           </button>
         </div>
 
-        <div class="overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-900/5">
-          <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-            <thead class="bg-gray-50">
+        <div class="overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[11px] tracking-wider">
               <tr>
-                <th scope="col" class="py-3.5 pl-4 pr-3 font-semibold text-gray-900 sm:pl-6">Pacient</th>
-                <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900">Číslo pojištěnce (RČ)</th>
-                <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900">Pojišťovna</th>
-                <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900">Telefon</th>
-                <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900">Index spolehlivosti</th>
-                <th scope="col" class="py-3.5 pr-4 pl-3 sm:pr-6 text-right font-semibold text-gray-900">Akce</th>
+                <th scope="col" class="py-3.5 pl-6 pr-3">Jméno pacienta</th>
+                <th scope="col" class="px-3 py-3.5">Číslo pojištěnce (RČ)</th>
+                <th scope="col" class="px-3 py-3.5">Pojišťovna</th>
+                <th scope="col" class="px-3 py-3.5">Telefon</th>
+                <th scope="col" class="px-3 py-3.5">Spolehlivost / Rušení</th>
+                <th scope="col" class="py-3.5 pr-6 pl-3 text-right">Akce</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 bg-white" id="patients-table-rows">
+            <tbody class="divide-y divide-slate-100 bg-white" id="patients-table-rows">
               <!-- Dynamické řádky pacientů -->
             </tbody>
           </table>
@@ -236,36 +216,36 @@
 
       <!-- ================= 3. TAB: ODBAVENÍ & VÝKONY ================= -->
       <section id="tab-visit" class="hidden space-y-6">
-        <div class="rounded-xl bg-white p-6 shadow-xs ring-1 ring-gray-900/5 space-y-6">
-          <div class="border-b border-gray-100 pb-4">
-            <h2 class="text-base font-semibold text-gray-900">Záznam o návštěvě a provedené výkony</h2>
-            <p class="mt-1 text-xs text-gray-500">Pravidlo: Výkon lze zapsat pouze k uskutečněné návštěvě · Realizace M:N vazby s evidencí počtu</p>
+        <div class="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <h2 class="text-base font-bold text-slate-900">Záznam o uskutečněné návštěvě a vykazování výkonů</h2>
+            <p class="mt-1 text-xs text-slate-500">Pravidlo: Výkon nelze zapsat k návštěvě, která se neuskutečnila · Realizace M:N vazby Návštěva ↔ Výkon</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-gray-900 mb-1">Vyberte uskutečněnou rezervaci:</label>
-              <select id="visit-appointment-picker" onchange="syncVisitForm()" class="block w-full rounded-md bg-white px-3 py-2 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Vyberte rezervaci k odbavení:</label>
+              <select id="visit-appointment-picker" onchange="syncVisitForm()" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
                 <!-- JS -->
               </select>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-900 mb-1">Lékařská zpráva / zkrácený nález:</label>
-              <input type="text" id="visit-doctor-note" placeholder="např. TK 120/80, doporučen klidový režim..." class="block w-full rounded-md bg-white px-3 py-2 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Lékařská zpráva ošetřujícího lékaře:</label>
+              <input type="text" id="visit-doctor-note" placeholder="např. TK 120/80, doporučen klidový režim..." class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
             </div>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-semibold text-gray-900">Provedené zdravotní výkony (Číselník VZP)</span>
-              <button onclick="addProcedureToActiveVisit()" class="rounded bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100">
-                + Přidat výkon
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Provedené zdravotní výkony (Číselník VZP)</span>
+              <button onclick="addProcedureToActiveVisit()" class="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100">
+                + Přidat další výkon
               </button>
             </div>
 
-            <div class="overflow-hidden rounded-lg border border-gray-200">
-              <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-                <thead class="bg-gray-50 font-semibold text-gray-900">
+            <div class="overflow-hidden rounded-xl border border-slate-200">
+              <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                <thead class="bg-slate-50 font-bold text-slate-700">
                   <tr>
                     <th class="py-2.5 pl-4 pr-3">Kód a název výkonu</th>
                     <th class="px-3 py-2.5 w-24">Počet</th>
@@ -274,22 +254,22 @@
                     <th class="py-2.5 pr-4 pl-3 text-center w-12">Smazat</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 bg-white" id="visit-procedures-rows">
+                <tbody class="divide-y divide-slate-100 bg-white" id="visit-procedures-rows">
                   <!-- Řádky výkonů -->
                 </tbody>
-                <tfoot class="bg-gray-50 font-semibold text-gray-900 border-t border-gray-200">
+                <tfoot class="bg-slate-50 font-bold text-slate-900 border-t border-slate-200">
                   <tr>
-                    <td colspan="3" class="py-2.5 pl-4 pr-3 text-right">Celkem bodů za návštěvu:</td>
-                    <td id="visit-sum-points" class="px-3 py-2.5 text-right text-indigo-600 font-mono text-sm">240 b.</td>
+                    <td colspan="3" class="py-2.5 pl-4 pr-3 text-right text-slate-600">Celkem bodů za návštěvu:</td>
+                    <td id="visit-sum-points" class="px-3 py-2.5 text-right text-indigo-700 font-mono text-sm">240 b.</td>
                     <td></td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
-            <div class="mt-4 flex justify-end">
-              <button onclick="saveActiveVisit()" class="rounded-md bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500">
-                ✓ Uložit návštěvu a vykázat body
+            <div class="mt-5 flex justify-end">
+              <button onclick="saveActiveVisit()" class="rounded-lg bg-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700">
+                ✓ Uložit návštěvu a zapsat body do výkazu
               </button>
             </div>
           </div>
@@ -298,93 +278,93 @@
 
       <!-- ================= 4. TAB: MĚSÍČNÍ VÝKAZY ================= -->
       <section id="tab-billing" class="hidden space-y-6">
-        <div class="sm:flex sm:items-center sm:justify-between border-b border-gray-200 pb-5">
+        <div class="sm:flex sm:items-center sm:justify-between border-b border-slate-200 pb-5">
           <div>
-            <h2 class="text-base font-semibold text-gray-900">Měsíční výkaz provedených výkonů a bodů</h2>
-            <p class="mt-1 text-xs text-gray-500">Automatický souhrn pro zdravotní pojišťovny · Šetří paní Věře celý podvečer přepisování do tabulek</p>
+            <h2 class="text-base font-bold text-slate-900">Měsíční výkaz provedených výkonů a bodů</h2>
+            <p class="mt-1 text-xs text-slate-500">Automatický souhrn pro zdravotní pojišťovny · Šetří paní Věře celý podvečer ručního počítání</p>
           </div>
           <div class="mt-4 sm:mt-0 flex gap-2">
-            <select class="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 ring-1 ring-inset ring-gray-300">
+            <select class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-900">
               <option>Říjen 2026</option>
               <option>Září 2026</option>
             </select>
-            <button onclick="alert('Výkaz exportován v oficiálním formátu VZP (KDAVKA)!')" class="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-800">
-              🖨️ Export dávky
+            <button onclick="alert('Výkaz byl úspěšně vyexportován!')" class="rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-slate-800">
+              Export dávky (KDAVKA)
             </button>
           </div>
         </div>
 
-        <!-- Statistiky (Tailwind UI Plus 4-Column Grid) -->
-        <div class="overflow-hidden rounded-xl shadow-xs ring-1 ring-gray-900/5">
-          <dl class="mx-auto grid grid-cols-1 gap-px bg-gray-900/5 sm:grid-cols-2 lg:grid-cols-4 dark:bg-white/10">
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
-              <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Vykázané body celkem</dt>
-              <dd class="text-xs font-medium text-emerald-600 dark:text-emerald-400">+8.45%</dd>
-              <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-indigo-600 dark:text-indigo-400">12 450 b.</dd>
+        <!-- 4sloupcový statistický přehled -->
+        <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-xs">
+          <dl class="mx-auto grid grid-cols-1 gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Vykázané body celkem</dt>
+              <dd class="text-xs font-bold text-emerald-700">+8.45%</dd>
+              <dd class="w-full flex-none text-2xl font-black text-indigo-700">12 450 b.</dd>
             </div>
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
-              <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Ošetření pacienti</dt>
-              <dd class="text-xs font-medium text-gray-700 dark:text-gray-300">+12.0%</dd>
-              <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-gray-900 dark:text-white">94 osob</dd>
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Ošetření pacienti</dt>
+              <dd class="text-xs font-bold text-slate-600">+12.0%</dd>
+              <dd class="w-full flex-none text-2xl font-black text-slate-900">94 osob</dd>
             </div>
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
-              <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Ušetřený čas paní Věry</dt>
-              <dd class="text-xs font-medium text-emerald-600 dark:text-emerald-400">automaticky</dd>
-              <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-emerald-600 dark:text-emerald-400">~5 hodin</dd>
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Ušetřený čas paní Věry</dt>
+              <dd class="text-xs font-bold text-emerald-700">automaticky</dd>
+              <dd class="w-full flex-none text-2xl font-black text-emerald-700">~5 hodin</dd>
             </div>
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
-              <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Storno / Nedošli</dt>
-              <dd class="text-xs font-medium text-rose-600 dark:text-rose-400">-3.15%</dd>
-              <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-rose-600 dark:text-rose-400">6 termínů</dd>
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-5 py-6">
+              <dt class="text-xs font-bold uppercase tracking-wider text-slate-500">Storno / Nedošli</dt>
+              <dd class="text-xs font-bold text-rose-700">-3.15%</dd>
+              <dd class="w-full flex-none text-2xl font-black text-rose-700">6 termínů</dd>
             </div>
           </dl>
         </div>
 
         <!-- Tabulka pojišťoven -->
-        <div class="overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-900/5">
-          <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-            <thead class="bg-gray-50 font-semibold text-gray-900">
+        <div class="overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead class="bg-slate-50 font-bold text-slate-700">
               <tr>
-                <th class="py-3.5 pl-4 pr-3 sm:pl-6">Pojišťovna</th>
+                <th class="py-3.5 pl-6 pr-3">Pojišťovna</th>
                 <th class="px-3 py-3.5">Kód</th>
                 <th class="px-3 py-3.5">Název výkonu</th>
                 <th class="px-3 py-3.5 text-center">Frekvence</th>
                 <th class="px-3 py-3.5 text-right">Body/ks</th>
-                <th class="py-3.5 pr-4 pl-3 sm:pr-6 text-right">Celkem</th>
+                <th class="py-3.5 pr-6 pl-3 text-right">Celkem</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
+            <tbody class="divide-y divide-slate-100 bg-white">
               <tr>
-                <td class="py-3 pl-4 pr-3 sm:pl-6 font-semibold text-gray-900">111 – VZP</td>
-                <td class="px-3 py-3 font-mono font-bold text-indigo-600">09511</td>
-                <td class="px-3 py-3 text-gray-600">Cílené vyšetření praktickým lékařem</td>
+                <td class="py-3 pl-6 pr-3 font-bold text-slate-900">111 – VZP</td>
+                <td class="px-3 py-3 font-mono font-bold text-indigo-700">09511</td>
+                <td class="px-3 py-3 text-slate-700">Cílené vyšetření praktickým lékařem</td>
                 <td class="px-3 py-3 text-center font-bold">52×</td>
                 <td class="px-3 py-3 text-right font-mono">150 b.</td>
-                <td class="py-3 pr-4 pl-3 sm:pr-6 text-right font-mono font-bold text-indigo-600">7 800 b.</td>
+                <td class="py-3 pr-6 pl-3 text-right font-mono font-bold text-indigo-700">7 800 b.</td>
               </tr>
               <tr>
-                <td class="py-3 pl-4 pr-3 sm:pl-6 font-semibold text-gray-900">111 – VZP</td>
-                <td class="px-3 py-3 font-mono font-bold text-indigo-600">09115</td>
-                <td class="px-3 py-3 text-gray-600">Aplikace injekce (i.m., s.c.)</td>
+                <td class="py-3 pl-6 pr-3 font-bold text-slate-900">111 – VZP</td>
+                <td class="px-3 py-3 font-mono font-bold text-indigo-700">09115</td>
+                <td class="px-3 py-3 text-slate-700">Aplikace injekce (i.m., s.c.)</td>
                 <td class="px-3 py-3 text-center font-bold">24×</td>
                 <td class="px-3 py-3 text-right font-mono">45 b.</td>
-                <td class="py-3 pr-4 pl-3 sm:pr-6 text-right font-mono font-bold text-indigo-600">1 080 b.</td>
+                <td class="py-3 pr-6 pl-3 text-right font-mono font-bold text-indigo-700">1 080 b.</td>
               </tr>
               <tr>
-                <td class="py-3 pl-4 pr-3 sm:pl-6 font-semibold text-gray-900">205 – ČPZP</td>
-                <td class="px-3 py-3 font-mono font-bold text-indigo-600">09513</td>
-                <td class="px-3 py-3 text-gray-600">Kontrolní vyšetření</td>
+                <td class="py-3 pl-6 pr-3 font-bold text-slate-900">205 – ČPZP</td>
+                <td class="px-3 py-3 font-mono font-bold text-indigo-700">09513</td>
+                <td class="px-3 py-3 text-slate-700">Kontrolní vyšetření</td>
                 <td class="px-3 py-3 text-center font-bold">20×</td>
                 <td class="px-3 py-3 text-right font-mono">95 b.</td>
-                <td class="py-3 pr-4 pl-3 sm:pr-6 text-right font-mono font-bold text-indigo-600">1 900 b.</td>
+                <td class="py-3 pr-6 pl-3 text-right font-mono font-bold text-indigo-700">1 900 b.</td>
               </tr>
               <tr>
-                <td class="py-3 pl-4 pr-3 sm:pl-6 font-semibold text-gray-900">211 – ZPMV</td>
-                <td class="px-3 py-3 font-mono font-bold text-indigo-600">09220</td>
-                <td class="px-3 py-3 text-gray-600">Elektrokardiografické vyšetření (EKG)</td>
+                <td class="py-3 pl-6 pr-3 font-bold text-slate-900">211 – ZPMV</td>
+                <td class="px-3 py-3 font-mono font-bold text-indigo-700">09220</td>
+                <td class="px-3 py-3 text-slate-700">Elektrokardiografické vyšetření (EKG)</td>
                 <td class="px-3 py-3 text-center font-bold">9×</td>
                 <td class="px-3 py-3 text-right font-mono">180 b.</td>
-                <td class="py-3 pr-4 pl-3 sm:pr-6 text-right font-mono font-bold text-indigo-600">1 620 b.</td>
+                <td class="py-3 pr-6 pl-3 text-right font-mono font-bold text-indigo-700">1 620 b.</td>
               </tr>
             </tbody>
           </table>
@@ -393,29 +373,31 @@
 
       <!-- ================= 5. TAB: VÝPADEK LÉKAŘE ================= -->
       <section id="tab-absence" class="hidden space-y-6">
-        <div class="rounded-xl bg-rose-50 p-6 border border-rose-200">
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-6">
           <div class="flex items-center gap-3">
-            <span class="text-2xl">⚠️</span>
+            <div class="size-9 rounded-xl bg-rose-600 text-white font-bold flex items-center justify-center text-sm">
+              !
+            </div>
             <div>
-              <h3 class="text-sm font-bold text-rose-900">Mimořádný stav: Nemoc / výpadek ordinace lékaře</h3>
-              <p class="text-xs text-rose-700 mt-0.5">Seznam pacientů s telefonními kontakty pro paní Věru k okamžitému obvolání z recepce</p>
+              <h3 class="text-sm font-bold text-rose-950">Mimořádný stav: Nemoc / nepřítomnost lékaře</h3>
+              <p class="text-xs text-rose-800 mt-0.5">Přehledný seznam pacientů k okamžitému telefonickému obvolání a přeplánování z recepce</p>
             </div>
           </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-900/5">
-          <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-            <thead class="bg-gray-50 font-semibold text-gray-900">
+        <div class="overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead class="bg-slate-50 font-bold text-slate-700">
               <tr>
-                <th class="py-3.5 pl-4 pr-3 sm:pl-6">Čas termínu</th>
+                <th class="py-3.5 pl-6 pr-3">Čas termínu</th>
                 <th class="px-3 py-3.5">Pacient</th>
                 <th class="px-3 py-3.5">Telefon</th>
                 <th class="px-3 py-3.5">Důvod</th>
                 <th class="px-3 py-3.5">Stav hovoru</th>
-                <th class="py-3.5 pr-4 pl-3 sm:pr-6 text-right">Akce</th>
+                <th class="py-3.5 pr-6 pl-3 text-right">Akce</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 bg-white" id="sick-table-rows">
+            <tbody class="divide-y divide-slate-100 bg-white" id="sick-table-rows">
               <!-- Dynamické řádky -->
             </tbody>
           </table>
@@ -427,20 +409,20 @@
 
   <!-- ================= MODÁL NOVÉ REZERVACE ================= -->
   <div id="booking-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500/75 transition-opacity duration-300"></div>
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"></div>
 
     <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
       <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900">Nová rezervace termínu</h3>
-            <button onclick="closeBookingModal()" class="text-gray-400 hover:text-gray-500 font-bold text-lg">&times;</button>
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 border border-slate-200">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900">Založit novou rezervaci termínu</h3>
+            <button onclick="closeBookingModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl leading-none">&times;</button>
           </div>
 
           <div class="space-y-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 mb-1">Lékař:</label>
-              <select id="modal-doctor" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 ring-1 ring-inset ring-gray-300">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Ošetřující lékař:</label>
+              <select id="modal-doctor" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-900">
                 <option value="1">MUDr. Jana Hrubá (Praktický lékař)</option>
                 <option value="2">MUDr. Petr Svoboda (Interna)</option>
                 <option value="3">MUDr. Eva Černá (Kardiologie)</option>
@@ -448,12 +430,12 @@
             </div>
 
             <div>
-              <label class="block text-xs font-medium text-gray-700 mb-1">Pacient (vyhledání v kartotéce):</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Vyberte pacienta:</label>
               <div class="flex gap-2">
-                <select id="modal-patient-picker" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs text-gray-900 ring-1 ring-inset ring-gray-300">
+                <select id="modal-patient-picker" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
                   <!-- JS -->
                 </select>
-                <button type="button" onclick="openNewPatientModal()" class="shrink-0 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200">
+                <button type="button" onclick="openNewPatientModal()" class="shrink-0 rounded-xl bg-slate-100 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200">
                   + Nový
                 </button>
               </div>
@@ -461,12 +443,12 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1">Čas začátku:</label>
-                <input type="time" id="modal-time-input" value="09:00" step="900" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs font-mono font-bold text-gray-900 ring-1 ring-inset ring-gray-300">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Čas začátku:</label>
+                <input type="time" id="modal-time-input" value="09:00" step="900" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono font-bold text-slate-900">
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1">Délka slotu:</label>
-                <select id="modal-duration-input" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs text-gray-900 ring-1 ring-inset ring-gray-300">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Délka slotu:</label>
+                <select id="modal-duration-input" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
                   <option value="15">15 min (Běžná kontrola)</option>
                   <option value="30">30 min (Komplexní vyšetření)</option>
                   <option value="45">45 min (Vstupní prohlídka)</option>
@@ -475,19 +457,19 @@
             </div>
 
             <div>
-              <label class="block text-xs font-medium text-gray-700 mb-1">Důvod návštěvy (poznámka):</label>
-              <input type="text" id="modal-reason-input" placeholder="např. Bolest zad, předpis léků..." class="block w-full rounded-md bg-white px-3 py-1.5 text-xs text-gray-900 ring-1 ring-inset ring-gray-300">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Důvod návštěvy (poznámka recepce):</label>
+              <input type="text" id="modal-reason-input" placeholder="např. Bolest kolene, kontrola po lécích..." class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
             </div>
 
-            <div id="modal-conflict-alert" class="hidden rounded-md bg-rose-50 p-3 text-xs font-medium text-rose-700 border border-rose-200"></div>
+            <div id="modal-conflict-alert" class="hidden rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700 border border-rose-200"></div>
           </div>
 
-          <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-            <button type="button" onclick="confirmNewBooking()" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 sm:col-start-2">
-              Uložit rezervaci
-            </button>
-            <button type="button" onclick="closeBookingModal()" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
+          <div class="mt-6 flex justify-end gap-2.5">
+            <button type="button" onclick="closeBookingModal()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
               Zrušit
+            </button>
+            <button type="button" onclick="confirmNewBooking()" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700">
+              Zapsat termín do diáře
             </button>
           </div>
         </div>
@@ -497,45 +479,45 @@
 
   <!-- ================= MODÁL SPRÁVY REZERVACE ================= -->
   <div id="detail-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500/75 transition-opacity duration-300"></div>
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"></div>
 
     <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
       <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900">Správa rezervace pacienta</h3>
-            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-500 font-bold text-lg">&times;</button>
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 border border-slate-200">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900">Správa rezervace</h3>
+            <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl leading-none">&times;</button>
           </div>
 
           <div class="space-y-3 text-xs">
-            <div class="flex justify-between py-1.5 border-b border-gray-100">
-              <span class="text-gray-500">Pacient:</span>
-              <span class="font-bold text-gray-900" id="detail-patient-name">-</span>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Pacient:</span>
+              <span class="font-bold text-slate-900" id="detail-patient-name">-</span>
             </div>
-            <div class="flex justify-between py-1.5 border-b border-gray-100">
-              <span class="text-gray-500">Telefon:</span>
-              <span class="font-mono font-semibold text-indigo-600" id="detail-patient-phone">-</span>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Telefonní kontakt:</span>
+              <span class="font-mono font-bold text-indigo-700" id="detail-patient-phone">-</span>
             </div>
-            <div class="flex justify-between py-1.5 border-b border-gray-100">
-              <span class="text-gray-500">Termín a délka:</span>
-              <span class="font-semibold text-gray-800" id="detail-slot-time">-</span>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Čas rezervace:</span>
+              <span class="font-bold text-slate-800" id="detail-slot-time">-</span>
             </div>
-            <div class="flex justify-between py-1.5 border-b border-gray-100">
-              <span class="text-gray-500">Důvod:</span>
-              <span class="text-gray-700 italic" id="detail-reason-text">-</span>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Důvod:</span>
+              <span class="text-slate-700 italic" id="detail-reason-text">-</span>
             </div>
-            <div class="flex justify-between py-1.5 border-b border-gray-100">
-              <span class="text-gray-500">Historie rušení pacienta:</span>
-              <span id="detail-cancellation-badge" class="font-semibold">-</span>
+            <div class="flex justify-between py-1.5 border-b border-slate-100">
+              <span class="text-slate-500 font-medium">Index spolehlivosti:</span>
+              <span id="detail-cancellation-badge" class="font-bold">-</span>
             </div>
           </div>
 
-          <div class="mt-5 space-y-2">
-            <button type="button" onclick="startVisitFromModal()" class="w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500">
-              🩺 Zahájit ošetření (Pacient dorazil)
+          <div class="mt-6 space-y-2">
+            <button type="button" onclick="startVisitFromModal()" class="w-full py-2.5 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white shadow-xs hover:bg-indigo-700">
+              Pacient dorazil (Zahájit ošetření)
             </button>
-            <button type="button" onclick="cancelBookingAction()" class="w-full justify-center rounded-md bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 ring-1 ring-inset ring-rose-600/20 hover:bg-rose-100">
-              ❌ Pacient ruší / nepřišel (Uvolnit slot)
+            <button type="button" onclick="cancelBookingAction()" class="w-full py-2.5 rounded-xl bg-rose-50 px-3 text-xs font-bold text-rose-700 border border-rose-200 hover:bg-rose-100">
+              Pacient ruší / nepřišel (Uvolnit slot)
             </button>
           </div>
         </div>
@@ -545,33 +527,33 @@
 
   <!-- ================= MODÁL ZALOŽENÍ PACIENTA ================= -->
   <div id="patient-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500/75 transition-opacity duration-300"></div>
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"></div>
 
     <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
       <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900">Založit nového pacienta</h3>
-            <button onclick="closeNewPatientModal()" class="text-gray-400 hover:text-gray-500 font-bold text-lg">&times;</button>
+        <div class="relative transform overflow-hidden rounded-2xl bg-white px-5 pb-5 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6 border border-slate-200">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900">Založit nového pacienta do kartotéky</h3>
+            <button onclick="closeNewPatientModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl leading-none">&times;</button>
           </div>
 
           <div class="space-y-3.5 text-xs">
             <div>
-              <label class="block font-medium text-gray-700 mb-1">Jméno:</label>
-              <input type="text" id="np-first-name" placeholder="např. Marie" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs text-gray-900 ring-1 ring-inset ring-gray-300">
+              <label class="block font-bold text-slate-700 mb-1">Jméno:</label>
+              <input type="text" id="np-first-name" placeholder="např. Marie" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
             </div>
             <div>
-              <label class="block font-medium text-gray-700 mb-1">Příjmení:</label>
-              <input type="text" id="np-last-name" placeholder="např. Krátká" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs text-gray-900 ring-1 ring-inset ring-gray-300">
+              <label class="block font-bold text-slate-700 mb-1">Příjmení:</label>
+              <input type="text" id="np-last-name" placeholder="např. Krátká" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900">
             </div>
             <div>
-              <label class="block font-medium text-gray-700 mb-1">Číslo pojištěnce (RČ - unikátní klíč):</label>
-              <input type="text" id="np-insurance-id" placeholder="např. 545812/0312" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs font-mono text-gray-900 ring-1 ring-inset ring-gray-300">
+              <label class="block font-bold text-slate-700 mb-1">Číslo pojištěnce (RČ - unikátní klíč):</label>
+              <input type="text" id="np-insurance-id" placeholder="např. 545812/0312" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900">
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block font-medium text-gray-700 mb-1">Pojišťovna:</label>
-                <select id="np-insurance-code" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-900 ring-1 ring-inset ring-gray-300">
+                <label class="block font-bold text-slate-700 mb-1">Pojišťovna:</label>
+                <select id="np-insurance-code" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-bold text-slate-900">
                   <option value="111">111 (VZP)</option>
                   <option value="205">205 (ČPZP)</option>
                   <option value="211">211 (ZPMV)</option>
@@ -579,18 +561,18 @@
                 </select>
               </div>
               <div>
-                <label class="block font-medium text-gray-700 mb-1">Telefon:</label>
-                <input type="text" id="np-phone" placeholder="721 849 102" class="block w-full rounded-md bg-white px-3 py-1.5 text-xs font-mono text-gray-900 ring-1 ring-inset ring-gray-300">
+                <label class="block font-bold text-slate-700 mb-1">Telefon:</label>
+                <input type="text" id="np-phone" placeholder="721 849 102" class="block w-full rounded-xl bg-slate-50 border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900">
               </div>
             </div>
           </div>
 
-          <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-            <button type="button" onclick="savePatientCard()" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 sm:col-start-2">
-              Uložit do kartotéky
-            </button>
-            <button type="button" onclick="closeNewPatientModal()" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-xs font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
+          <div class="mt-6 flex justify-end gap-2.5">
+            <button type="button" onclick="closeNewPatientModal()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
               Zavřít
+            </button>
+            <button type="button" onclick="savePatientCard()" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700">
+              Uložit kartu
             </button>
           </div>
         </div>
@@ -632,7 +614,7 @@
           id: 301,
           appointmentId: 3,
           patientId: 102,
-          note: "TK 125/80, pacientka kompenzována. E-recept odeslán SMS zprávou.",
+          note: "TK 125/80, kompenzována. E-recept odeslán SMS.",
           items: [
             { procedureId: 2, count: 1, points: 95 },
             { procedureId: 3, count: 1, points: 45 }
@@ -646,17 +628,23 @@
     function switchTab(tabId) {
       ['calendar', 'patients', 'visit', 'billing', 'absence'].forEach(t => {
         const sec = document.getElementById(`tab-${t}`);
-        const nav = document.getElementById(`top-nav-${t}`);
+        const btn = document.getElementById(`tab-${t}-btn`);
         if (t === tabId) {
           sec.classList.remove('hidden');
-          if (nav) nav.className = "rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white transition";
+          if (btn) {
+            if (t === 'absence') {
+              btn.className = "px-3.5 py-2 rounded-lg text-xs font-bold text-rose-800 bg-rose-100 border border-rose-300 transition";
+            } else {
+              btn.className = "px-3.5 py-2 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 transition";
+            }
+          }
         } else {
           sec.classList.add('hidden');
-          if (nav) {
+          if (btn) {
             if (t === 'absence') {
-              nav.className = "rounded-md px-3 py-2 text-sm font-medium text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 transition";
+              btn.className = "px-3.5 py-2 rounded-lg text-xs font-bold text-rose-700 bg-rose-50/70 hover:bg-rose-100 border border-rose-200 transition";
             } else {
-              nav.className = "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition";
+              btn.className = "px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition";
             }
           }
         }
@@ -669,12 +657,12 @@
     }
 
     // Mobilní menu toggle
-    function toggleTopMobileMenu() {
-      const m = document.getElementById('mobile-menu');
-      m.classList.toggle('hidden');
+    function toggleMobileNav() {
+      const menu = document.getElementById('mobile-nav-menu');
+      menu.classList.toggle('hidden');
     }
 
-    // Volba lékaře
+    // Změna lékaře
     function changeDoctor(id) {
       db.activeDoctorId = parseInt(id);
       renderCalendar();
@@ -698,7 +686,7 @@
       timeSlots.forEach(time => {
         const app = db.appointments.find(a => a.doctorId === db.activeDoctorId && a.time === time && a.status !== 'CANCELLED');
         const li = document.createElement('li');
-        li.className = "flex items-center justify-between gap-x-6 py-3.5 px-6 hover:bg-gray-50 transition";
+        li.className = "flex items-center justify-between gap-x-6 py-3.5 px-6 hover:bg-slate-50/80 transition";
 
         if (app) {
           booked++;
@@ -707,30 +695,30 @@
 
           li.innerHTML = `
             <div class="min-w-0 flex items-center gap-x-4">
-              <span class="font-mono text-xs font-bold text-gray-900 w-14">${time}</span>
+              <span class="font-mono text-xs font-bold text-slate-900 w-14">${time}</span>
               <div>
-                <div class="flex items-center gap-x-2">
-                  <p class="text-xs font-semibold text-gray-900">${patient ? patient.lastName + ' ' + patient.firstName : 'Neznámý'}</p>
-                  <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${isDone ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10'}">
-                    ${isDone ? '✓ Odbaveno' : app.duration + ' min'}
+                <div class="flex items-center gap-x-2.5">
+                  <p class="text-xs font-bold text-slate-900">${patient ? patient.lastName + ' ' + patient.firstName : 'Neznámý'}</p>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ${isDone ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-indigo-50 text-indigo-800 border border-indigo-200'}">
+                    ${isDone ? 'Odbaveno' : app.duration + ' min'}
                   </span>
                 </div>
-                <p class="mt-0.5 text-[11px] text-gray-500 truncate">${app.reason} · tel: ${patient ? patient.phone : ''}</p>
+                <p class="mt-0.5 text-[11px] text-slate-500 font-medium truncate">${app.reason} · tel: <span class="font-mono text-slate-700">${patient ? patient.phone : ''}</span></p>
               </div>
             </div>
-            <button onclick="openDetailModal(${app.id})" class="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-2xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-              Spravovat rezervaci
+            <button onclick="openDetailModal(${app.id})" class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50">
+              Spravovat
             </button>
           `;
         } else {
           li.innerHTML = `
             <div class="flex items-center gap-x-4">
-              <span class="font-mono text-xs text-gray-400 w-14">${time}</span>
-              <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+              <span class="font-mono text-xs font-semibold text-slate-400 w-14">${time}</span>
+              <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
                 Volný slot (15 min)
               </span>
             </div>
-            <button onclick="quickBook('${time}')" class="rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-100">
+            <button onclick="quickBook('${time}')" class="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100">
               + Rezervovat
             </button>
           `;
@@ -770,7 +758,7 @@
       const patId = parseInt(document.getElementById('modal-patient-picker').value);
       const time = document.getElementById('modal-time-input').value;
       const duration = parseInt(document.getElementById('modal-duration-input').value);
-      const reason = document.getElementById('modal-reason-input').value || "Běžná prohlídka";
+      const reason = document.getElementById('modal-reason-input').value || "Běžná kontrola";
 
       // Byznysové pravidlo 1: Zákaz kolize na stejný termín
       const conflict = db.appointments.find(a => a.doctorId === docId && a.time === time && a.status !== 'CANCELLED');
@@ -809,9 +797,9 @@
 
       const badge = document.getElementById('detail-cancellation-badge');
       if (p && p.cancellations >= 3) {
-        badge.innerHTML = `<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">⚠️ ${p.cancellations}× zrušil (vysoké riziko)</span>`;
+        badge.innerHTML = `<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-200">Rizikový: ${p.cancellations}× nedorazil</span>`;
       } else {
-        badge.innerHTML = `<span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Spolehlivý (${p ? p.cancellations : 0}× zrušení)</span>`;
+        badge.innerHTML = `<span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">Bezproblémový (${p ? p.cancellations : 0}× rušení)</span>`;
       }
 
       document.getElementById('detail-modal').classList.remove('hidden');
@@ -849,30 +837,31 @@
 
       list.forEach(p => {
         const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
         tr.innerHTML = `
-          <td class="py-4 pl-4 pr-3 sm:pl-6">
+          <td class="py-4 pl-6 pr-3">
             <div class="flex items-center gap-3">
-              <div class="size-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-700 text-xs">
+              <div class="size-8 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center font-bold text-slate-800 text-xs">
                 ${p.firstName[0]}${p.lastName[0]}
               </div>
               <div>
-                <p class="font-semibold text-gray-900">${p.lastName} ${p.firstName}</p>
-                <p class="text-[11px] text-gray-500">Aktivní pacient</p>
+                <p class="font-bold text-slate-900">${p.lastName} ${p.firstName}</p>
+                <p class="text-[11px] text-slate-500">Pravidelný pacient</p>
               </div>
             </div>
           </td>
-          <td class="px-3 py-4 font-mono font-medium text-gray-700">${p.insuranceId}</td>
+          <td class="px-3 py-4 font-mono font-bold text-slate-800">${p.insuranceId}</td>
           <td class="px-3 py-4">
-            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">${p.insuranceCode}</span>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 border border-slate-200">${p.insuranceCode}</span>
           </td>
-          <td class="px-3 py-4 font-mono text-gray-600">${p.phone}</td>
+          <td class="px-3 py-4 font-mono text-slate-700">${p.phone}</td>
           <td class="px-3 py-4">
             ${p.cancellations >= 3
-              ? `<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 ring-1 ring-inset ring-rose-600/20">⚠️ ${p.cancellations}× neomluveno</span>`
-              : `<span class="text-gray-500 font-medium">${p.cancellations}× zrušeno</span>`}
+              ? `<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-800 border border-rose-200">Varování: ${p.cancellations}× neomluveno</span>`
+              : `<span class="text-slate-500 font-medium">${p.cancellations}× zrušeno</span>`}
           </td>
-          <td class="py-4 pr-4 pl-3 sm:pr-6 text-right">
-            <button onclick="bookDirectForPatient(${p.id})" class="rounded-md bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-100">
+          <td class="py-4 pr-6 pl-3 text-right">
+            <button onclick="bookDirectForPatient(${p.id})" class="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100">
               Objednat
             </button>
           </td>
@@ -914,11 +903,11 @@
       const phone = document.getElementById('np-phone').value.trim();
 
       if (!fName || !lName || !insId) {
-        alert("Vyplňte prosím jméno, příjmení a rodné číslo / pojištěnce!");
+        alert("Vyplňte prosím jméno, příjmení a rodné číslo!");
         return;
       }
 
-      // Ochrana proti duplicitě paní Novákové
+      // Ochrana proti duplicitě
       const exists = db.patients.find(p => p.insuranceId === insId);
       if (exists) {
         alert(`CHYBA: Pacient s číslem pojištěnce ${insId} již existuje (${exists.lastName} ${exists.firstName})!\nZamezeno vzniku duplicity.`);
@@ -947,8 +936,8 @@
       const finished = db.appointments.filter(a => a.status === 'COMPLETED');
 
       if (finished.length === 0) {
-        picker.innerHTML = '<option value="">Žádná návštěva k vyúčtování</option>';
-        document.getElementById('visit-procedures-rows').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">Nejprve označte v diáři návštěvu za uskutečněnou.</td></tr>';
+        picker.innerHTML = '<option value="">Žádná uskutečněná návštěva k vyúčtování</option>';
+        document.getElementById('visit-procedures-rows').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Nejprve v diáři označte návštěvu za uskutečněnou.</td></tr>';
         return;
       }
 
@@ -993,9 +982,10 @@
         sum += subtotal;
 
         const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
         tr.innerHTML = `
           <td class="py-2.5 pl-4 pr-3">
-            <select onchange="changeVisitProc(${visit.id}, ${idx}, this.value)" class="block w-full rounded-md bg-white px-2 py-1 text-xs text-gray-900 ring-1 ring-inset ring-gray-300">
+            <select onchange="changeVisitProc(${visit.id}, ${idx}, this.value)" class="block w-full rounded-lg bg-white border border-slate-300 px-2 py-1 text-xs text-slate-900 font-medium">
               ${db.procedures.map(p => `
                 <option value="${p.id}" ${p.id === pDef.id ? 'selected' : ''}>
                   ${p.code} – ${p.name} (${p.points} b.)
@@ -1004,12 +994,12 @@
             </select>
           </td>
           <td class="px-3 py-2.5">
-            <input type="number" min="1" max="10" value="${item.count}" onchange="changeVisitCount(${visit.id}, ${idx}, this.value)" class="block w-16 rounded-md bg-white px-2 py-1 text-center font-bold text-xs ring-1 ring-inset ring-gray-300">
+            <input type="number" min="1" max="10" value="${item.count}" onchange="changeVisitCount(${visit.id}, ${idx}, this.value)" class="block w-16 rounded-lg bg-white border border-slate-300 px-2 py-1 text-center font-bold text-xs">
           </td>
-          <td class="px-3 py-2.5 text-right font-mono text-gray-500">${pDef.points} b.</td>
-          <td class="px-3 py-2.5 text-right font-mono font-bold text-indigo-600">${subtotal} b.</td>
+          <td class="px-3 py-2.5 text-right font-mono text-slate-600">${pDef.points} b.</td>
+          <td class="px-3 py-2.5 text-right font-mono font-bold text-indigo-700">${subtotal} b.</td>
           <td class="py-2.5 pr-4 pl-3 text-center">
-            <button onclick="removeVisitProc(${visit.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold">&times;</button>
+            <button onclick="removeVisitProc(${visit.id}, ${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-base">&times;</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1063,21 +1053,22 @@
       affected.forEach(a => {
         const p = db.patients.find(x => x.id === a.patientId);
         const tr = document.createElement('tr');
+        tr.className = "hover:bg-rose-50/50 transition";
         tr.innerHTML = `
-          <td class="py-3.5 pl-4 pr-3 sm:pl-6 font-mono font-bold text-gray-900">${a.time}</td>
-          <td class="px-3 py-3.5 font-semibold text-gray-900">${p ? p.lastName + ' ' + p.firstName : ''}</td>
-          <td class="px-3 py-3.5 font-mono text-indigo-600 font-semibold">${p ? p.phone : ''}</td>
-          <td class="px-3 py-3.5 text-gray-500 italic">„${a.reason}“</td>
+          <td class="py-3.5 pl-6 pr-3 font-mono font-bold text-slate-900">${a.time}</td>
+          <td class="px-3 py-3.5 font-bold text-slate-900">${p ? p.lastName + ' ' + p.firstName : ''}</td>
+          <td class="px-3 py-3.5 font-mono text-indigo-700 font-bold">${p ? p.phone : ''}</td>
+          <td class="px-3 py-3.5 text-slate-600 italic">„${a.reason}“</td>
           <td class="px-3 py-3.5" id="sick-status-${a.id}">
-            <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
-              📞 Čeká na obvolání
+            <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800 border border-amber-200">
+              Čeká na obvolání
             </span>
           </td>
-          <td class="py-3.5 pr-4 pl-3 sm:pr-6 text-right space-x-2">
-            <button onclick="setCalled(${a.id})" class="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-2xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+          <td class="py-3.5 pr-6 pl-3 text-right space-x-2">
+            <button onclick="setCalled(${a.id})" class="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
               Zavoláno
             </button>
-            <button onclick="reschedule(${a.id})" class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-500">
+            <button onclick="reschedule(${a.id})" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700">
               Přeplánovat
             </button>
           </td>
@@ -1087,7 +1078,7 @@
     }
 
     function setCalled(id) {
-      document.getElementById(`sick-status-${id}`).innerHTML = '<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">✓ Obvoláno</span>';
+      document.getElementById(`sick-status-${id}`).innerHTML = '<span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">✓ Obvoláno</span>';
     }
 
     function reschedule(id) {
