@@ -137,9 +137,10 @@
 
           <!-- Posun dnů -->
           <div class="flex items-center gap-2">
-            <button onclick="showToast('Kalendář', 'Zobrazen předchozí pracovní den', 'info')" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">◀</button>
-            <span class="text-xs font-bold text-slate-900 px-2" id="current-date-label">Pondělí, 26. října 2026</span>
-            <button onclick="showToast('Kalendář', 'Zobrazen následující pracovní den', 'info')" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50">▶</button>
+            <button onclick="changeDay(-1)" title="Předchozí den" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition">◀</button>
+            <span class="text-xs font-bold text-slate-900 px-3 py-1.5 bg-slate-100 rounded-xl border border-slate-200" id="current-date-label">Pondělí, 26. října 2026</span>
+            <button onclick="changeDay(1)" title="Následující den" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition">▶</button>
+            <button onclick="setTodayDate()" class="rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-2.5 py-1.5 text-[11px] font-bold text-indigo-700 transition">Dnes</button>
           </div>
 
           <!-- Přehled kapacity -->
@@ -696,9 +697,24 @@
       showAppAlert("Oznámení systému", msg, "info");
     };
 
-    // DATABÁZE A STAV
+    // 0. DATABÁZE A STAV
+    const CZ_DAYS = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+    const CZ_MONTHS = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+
+    function formatDateCZ(d) {
+      return `${CZ_DAYS[d.getDay()]}, ${d.getDate()}. ${CZ_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function formatDateISO(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     const db = {
       activeDoctorId: 1,
+      currentDate: new Date(2026, 9, 26), // Výchozí: Pondělí 26. října 2026
       doctors: [
         { id: 1, name: "MUDr. Jana Hrubá", role: "Praktický lékař", hours: "Po, St, Pá 8:00 - 12:30; Út 8:00 - 12:00" },
         { id: 2, name: "MUDr. Petr Svoboda", role: "Interna", hours: "Po, Út, Čt 8:30 - 14:00 (Út odpoledne externě mimo ordinaci)" },
@@ -719,10 +735,29 @@
         { id: 5, code: "09220", name: "Elektrokardiografické vyšetření (EKG)", points: 180 }
       ],
       appointments: [
-        { id: 1, doctorId: 1, patientId: 101, time: "08:15", duration: 15, status: "PLANNED", reason: "Bolest v krku a teplota" },
-        { id: 2, doctorId: 1, patientId: 103, time: "08:45", duration: 30, status: "PLANNED", reason: "Preventivní prohlídka po 2 letech" },
-        { id: 3, doctorId: 1, patientId: 102, time: "10:00", duration: 15, status: "COMPLETED", reason: "Předpis chronických léků na tlak" },
-        { id: 4, doctorId: 1, patientId: 104, time: "10:30", duration: 15, status: "PLANNED", reason: "Aplikace očkovací látky" }
+        // Pondělí 26. 10. 2026
+        { id: 1, doctorId: 1, patientId: 101, date: "2026-10-26", time: "08:15", duration: 15, status: "PLANNED", reason: "Bolest v krku a teplota" },
+        { id: 2, doctorId: 1, patientId: 103, date: "2026-10-26", time: "08:45", duration: 30, status: "PLANNED", reason: "Preventivní prohlídka po 2 letech" },
+        { id: 3, doctorId: 1, patientId: 102, date: "2026-10-26", time: "10:00", duration: 15, status: "COMPLETED", reason: "Předpis chronických léků na tlak" },
+        { id: 4, doctorId: 1, patientId: 104, date: "2026-10-26", time: "10:30", duration: 15, status: "PLANNED", reason: "Aplikace očkovací látky" },
+        { id: 5, doctorId: 2, patientId: 105, date: "2026-10-26", time: "09:00", duration: 30, status: "PLANNED", reason: "Vstupní interní vyšetření" },
+
+        // Úterý 27. 10. 2026
+        { id: 6, doctorId: 1, patientId: 102, date: "2026-10-27", time: "08:30", duration: 15, status: "PLANNED", reason: "Kontrola krevního tlaku" },
+        { id: 7, doctorId: 1, patientId: 105, date: "2026-10-27", time: "09:15", duration: 15, status: "PLANNED", reason: "Výpis ze zdravotní dokumentace" },
+        { id: 8, doctorId: 2, patientId: 101, date: "2026-10-27", time: "09:00", duration: 30, status: "PLANNED", reason: "Kontrola laboratorních výsledků" },
+
+        // Středa 28. 10. 2026
+        { id: 9, doctorId: 1, patientId: 104, date: "2026-10-28", time: "08:45", duration: 15, status: "PLANNED", reason: "Odběry krve nalačno" },
+        { id: 10, doctorId: 3, patientId: 103, date: "2026-10-28", time: "09:30", duration: 30, status: "PLANNED", reason: "Pravidelné EKG vyšetření" },
+
+        // Čtvrtek 29. 10. 2026
+        { id: 11, doctorId: 2, patientId: 102, date: "2026-10-29", time: "08:45", duration: 15, status: "PLANNED", reason: "Doporučení na rehabilitační péči" },
+        { id: 12, doctorId: 3, patientId: 105, date: "2026-10-29", time: "10:15", duration: 45, status: "PLANNED", reason: "Komplexní kardiologická konzultace" },
+
+        // Pátek 30. 10. 2026
+        { id: 13, doctorId: 1, patientId: 101, date: "2026-10-30", time: "08:15", duration: 15, status: "PLANNED", reason: "Předoperační vyšetření a razítko" },
+        { id: 14, doctorId: 1, patientId: 103, date: "2026-10-30", time: "11:00", duration: 15, status: "PLANNED", reason: "Ukončení pracovní neschopnosti" }
       ],
       visits: [
         {
@@ -777,6 +812,21 @@
       menu.classList.toggle('hidden');
     }
 
+    // Navigace ve dnech
+    function changeDay(delta) {
+      db.currentDate.setDate(db.currentDate.getDate() + delta);
+      document.getElementById('current-date-label').textContent = formatDateCZ(db.currentDate);
+      renderCalendar();
+      showToast("Změna dne", formatDateCZ(db.currentDate), "info");
+    }
+
+    function setTodayDate() {
+      db.currentDate = new Date(2026, 9, 26);
+      document.getElementById('current-date-label').textContent = formatDateCZ(db.currentDate);
+      renderCalendar();
+      showToast("Dnešní den", "Zpět na pondělí 26. října 2026", "info");
+    }
+
     // Změna lékaře
     function changeDoctor(id) {
       db.activeDoctorId = parseInt(id);
@@ -788,6 +838,23 @@
       const container = document.getElementById('calendar-slots-list');
       container.innerHTML = '';
 
+      const isoDate = formatDateISO(db.currentDate);
+      const dayOfWeek = db.currentDate.getDay(); // 0 = Ne, 6 = So, 2 = Út
+
+      // Víkend
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        container.innerHTML = `
+          <li class="py-12 px-6 text-center text-slate-500">
+            <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400 font-bold">i</div>
+            <p class="font-bold text-slate-800">Ordinace je o víkendu uzavřena</p>
+            <p class="text-xs text-slate-500 mt-1">Použijte šipky ◀ / ▶ pro přepnutí na ordinační dny (Pondělí – Pátek).</p>
+          </li>
+        `;
+        document.getElementById('calendar-capacity-counter').textContent = `0 / 0 slotů`;
+        document.getElementById('calendar-free-counter').textContent = `Víkend (zavřeno)`;
+        return;
+      }
+
       const timeSlots = [
         "08:00", "08:15", "08:30", "08:45",
         "09:00", "09:15", "09:30", "09:45",
@@ -797,13 +864,36 @@
       ];
 
       let booked = 0;
+      let blockedSlots = 0;
 
       timeSlots.forEach(time => {
-        const app = db.appointments.find(a => a.doctorId === db.activeDoctorId && a.time === time && a.status !== 'CANCELLED');
+        // Obchodní pravidlo ze zadání: MUDr. Svoboda (id 2) v úterý odpoledne (od 12:00) ordinuje na jiné adrese
+        const isSvobodaTuesdayAfternoon = (db.activeDoctorId === 2 && dayOfWeek === 2 && time >= "12:00");
+
+        const app = db.appointments.find(a => 
+          a.doctorId === db.activeDoctorId && 
+          a.date === isoDate && 
+          a.time === time && 
+          a.status !== 'CANCELLED'
+        );
+
         const li = document.createElement('li');
         li.className = "flex items-center justify-between gap-x-6 py-3.5 px-6 hover:bg-slate-50/80 transition";
 
-        if (app) {
+        if (isSvobodaTuesdayAfternoon) {
+          blockedSlots++;
+          li.innerHTML = `
+            <div class="flex items-center gap-x-4">
+              <span class="font-mono text-xs text-slate-400 w-14">${time}</span>
+              <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">
+                Externí pracoviště (nelze objednat)
+              </span>
+            </div>
+            <button disabled class="rounded-lg bg-slate-100 border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-400 cursor-not-allowed">
+              Blokováno
+            </button>
+          `;
+        } else if (app) {
           booked++;
           const patient = db.patients.find(p => p.id === app.patientId);
           const isDone = app.status === 'COMPLETED';
@@ -841,8 +931,9 @@
         container.appendChild(li);
       });
 
-      document.getElementById('calendar-capacity-counter').textContent = `${booked} / ${timeSlots.length} slotů`;
-      document.getElementById('calendar-free-counter').textContent = `${timeSlots.length - booked} volných`;
+      const totalAvailable = timeSlots.length - blockedSlots;
+      document.getElementById('calendar-capacity-counter').textContent = `${booked} / ${totalAvailable} slotů`;
+      document.getElementById('calendar-free-counter').textContent = `${totalAvailable - booked} volných`;
     }
 
     function quickBook(time) {
@@ -874,12 +965,25 @@
       const time = document.getElementById('modal-time-input').value;
       const duration = parseInt(document.getElementById('modal-duration-input').value);
       const reason = document.getElementById('modal-reason-input').value || "Běžná kontrola";
+      const isoDate = formatDateISO(db.currentDate);
+      const dayOfWeek = db.currentDate.getDay();
 
-      // Byznysové pravidlo 1: Zákaz kolize na stejný termín
-      const conflict = db.appointments.find(a => a.doctorId === docId && a.time === time && a.status !== 'CANCELLED');
+      // Pravidlo 1: Úterý odpoledne MUDr. Svoboda na externí adrese
+      if (docId === 2 && dayOfWeek === 2 && time >= "12:00") {
+        showAppAlert("Nelze objednat", "MUDr. Petr Svoboda v úterý odpoledne ordinuje na jiné adrese. V tomto systému nelze termín rezervovat!", "warning");
+        return;
+      }
+
+      // Pravidlo 2: Zákaz kolize na stejný termín a den u téhož lékaře
+      const conflict = db.appointments.find(a => 
+        a.doctorId === docId && 
+        a.date === isoDate && 
+        a.time === time && 
+        a.status !== 'CANCELLED'
+      );
       if (conflict) {
         const alertBox = document.getElementById('modal-conflict-alert');
-        alertBox.textContent = "KOLIZE: Tento termín je již u vybraného lékaře obsazen! Systém nedovolí překrytí.";
+        alertBox.textContent = "KOLIZE: Tento termín je již v daný den u vybraného lékaře obsazen! Systém nedovolí překrytí.";
         alertBox.classList.remove('hidden');
         return;
       }
@@ -888,6 +992,7 @@
         id: Date.now(),
         doctorId: docId,
         patientId: patId,
+        date: isoDate,
         time: time,
         duration: duration,
         status: "PLANNED",
@@ -896,7 +1001,7 @@
 
       closeBookingModal();
       renderCalendar();
-      showToast("Rezervace uložena", `Termín v ${time} pro pacienta byl zapsán do diáře.`);
+      showToast("Rezervace uložena", `Termín na ${formatDateCZ(db.currentDate)} v ${time} byl zapsán do diáře.`);
     }
 
     // Detail rezervace
@@ -906,7 +1011,7 @@
       db.activeDetailApp = app;
       const p = db.patients.find(x => x.id === app.patientId);
 
-      document.getElementById('detail-slot-time').textContent = `Dnes v ${app.time} (${app.duration} minut)`;
+      document.getElementById('detail-slot-time').textContent = `${formatDateCZ(db.currentDate)} v ${app.time} (${app.duration} minut)`;
       document.getElementById('detail-patient-name').textContent = p ? `${p.lastName} ${p.firstName}` : '-';
       document.getElementById('detail-patient-phone').textContent = p ? p.phone : '-';
       document.getElementById('detail-reason-text').textContent = app.reason;
