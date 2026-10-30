@@ -1,0 +1,69 @@
+# Spuštění celé aplikace:          docker compose up --build
+# Jednotkové testy:                docker compose run --rm test-unit
+# Integrační testy (PostgreSQL):   docker compose run --rm test-integration
+
+x-db-env: &db-env
+  POSTGRES_USER: ${POSTGRES_USER:-clinic}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-only}
+  POSTGRES_DB: ${POSTGRES_DB:-clinic}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment: *db-env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-clinic}:${POSTGRES_PASSWORD:-change-me-local-only}@db:5432/${POSTGRES_DB:-clinic}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  test-unit:
+    profiles: ["tests"]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "pytest", "-q", "tests/unit"]
+
+  db-test:
+    profiles: ["tests"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: clinic_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d clinic_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  test-integration:
+    profiles: ["tests"]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      TEST_DATABASE_URL: postgresql+psycopg://test:test@db-test:5432/clinic_test
+    command: ["python", "-m", "pytest", "-q", "tests/integration"]
+    depends_on:
+      db-test:
+        condition: service_healthy
+
+volumes:
+  db-data:
