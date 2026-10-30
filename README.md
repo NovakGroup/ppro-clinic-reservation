@@ -2,7 +2,8 @@
 
 Semestrální projekt z předmětu **Pokročilé programování (PPRO)**, ZS 2026/2027
 Fakulta informatiky a managementu, Univerzita Hradec Králové
-**Zadání A – Rezervace v ordinaci** · **Klient**: MUDr. Jana Hrubá, Ordinace Na Vyhlídce
+**Zadání A – Rezervace v ordinaci** · **Klient**: MUDr. Jana Hrubá, Ordinace Na Vyhlídce  
+**Autor**: Bc. Adam Novák
 
 Webová aplikace pro recepci (paní Věra) a tři lékaře. Nahrazuje papírový diář: eviduje pacienty, lékaře a jejich ordinační hodiny, hlídá, aby nevznikly dvě rezervace na stejný čas, zaznamenává provedené výkony a z nich automaticky skládá měsíční výkaz pro pojišťovny.
 
@@ -184,8 +185,22 @@ erDiagram
 * **Docker + Docker Compose** – spuštění celé aplikace jedním příkazem.
 * **HTML + Tailwind CSS + čistý JavaScript** – jednoduché rozhraní bez build kroku.
 
-## 8. Historie změn
+## 8. Práce s AI
+
+Projekt vznikl s pomocí AI nástrojů, jak to předmět PPRO předpokládá:
+
+* **Google Antigravity** – úvodní struktura repozitáře, pravidla spolupráce s agentem (`agent.md`), první návrh README a klikací prototyp UI.
+* **Claude (Anthropic)** – revize a oprava prototypu, backend ve třech vrstvách, migrace databáze, napojení frontendu na API, Docker Compose, testy a technická dokumentace.
+
+Vygenerovaný kód jsem ověřil automatickými testy (58 jednotkových, 12 integračních proti PostgreSQL), spuštěním celé aplikace přes `docker compose up` na vlastním počítači a kontrolou proti požadavkům zadání. Za odevzdaný kód ručím a rozumím mu. Podrobnosti jsou v kapitole 9 technické dokumentace (`docs/dokumentace.pdf`).
+
+## 9. Historie změn
 
 * `2026-10-23` – inicializace repozitáře, pravidla spolupráce (`agent.md`), návrh a specifikace zadání A.
 * `2026-10-30` – klikací prototyp UI; oprava chyb prototypu (ordinační hodiny, kolize, validace, výkazy, výpadek lékaře); kompaktní hlavička.
 * `2026-10-30` – backend FastAPI ve třech vrstvách, PostgreSQL s migracemi, exclusion constraint a zákaz mazání historie v DB, frontend napojený na REST API, týdenní přehled volných termínů, rok narození pacienta, Docker Compose, jednotkové a integrační testy, technická dokumentace.
+* `2026-10-30` – oprava spuštění na Windows (konce řádků v `entrypoint.sh`), doplnění autora do dokumentace.
+
+---
+
+**Autor:** Bc. Adam Novák · Aplikovaná informatika – navazující magisterské studium, kombinovaná forma · FIM UHK, ZS 2026/2027
