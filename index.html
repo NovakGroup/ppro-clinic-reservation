@@ -451,21 +451,31 @@
             </div>
           </div>
 
-          <!-- Statistiky (Tailwind UI Stats) -->
-          <dl class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <div class="overflow-hidden rounded-xl bg-white px-4 py-5 shadow-xs ring-1 ring-gray-900/5 sm:p-6">
-              <dt class="truncate text-xs font-medium text-gray-500 uppercase tracking-wide">Celkem bodů za měsíc</dt>
-              <dd class="mt-2 text-3xl font-bold tracking-tight text-indigo-600">12 450 b.</dd>
-            </div>
-            <div class="overflow-hidden rounded-xl bg-white px-4 py-5 shadow-xs ring-1 ring-gray-900/5 sm:p-6">
-              <dt class="truncate text-xs font-medium text-gray-500 uppercase tracking-wide">Ošetřených pacientů</dt>
-              <dd class="mt-2 text-3xl font-bold tracking-tight text-gray-900">94</dd>
-            </div>
-            <div class="overflow-hidden rounded-xl bg-white px-4 py-5 shadow-xs ring-1 ring-gray-900/5 sm:p-6">
-              <dt class="truncate text-xs font-medium text-gray-500 uppercase tracking-wide">Ušetřený čas recepce</dt>
-              <dd class="mt-2 text-3xl font-bold tracking-tight text-emerald-600">~5 hodin</dd>
-            </div>
-          </dl>
+          <!-- Statistiky (Tailwind UI Plus 4-Column Grid) -->
+          <div class="overflow-hidden rounded-xl shadow-xs ring-1 ring-gray-900/5">
+            <dl class="mx-auto grid grid-cols-1 gap-px bg-gray-900/5 sm:grid-cols-2 lg:grid-cols-4 dark:bg-white/10">
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
+                <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Vykázané body celkem</dt>
+                <dd class="text-xs font-medium text-emerald-600 dark:text-emerald-400">+8.45%</dd>
+                <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-indigo-600 dark:text-indigo-400">12 450 b.</dd>
+              </div>
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
+                <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Ošetření pacienti</dt>
+                <dd class="text-xs font-medium text-gray-700 dark:text-gray-300">+12.0%</dd>
+                <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-gray-900 dark:text-white">94 osob</dd>
+              </div>
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
+                <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Ušetřený čas paní Věry</dt>
+                <dd class="text-xs font-medium text-emerald-600 dark:text-emerald-400">automaticky</dd>
+                <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-emerald-600 dark:text-emerald-400">~5 hodin</dd>
+              </div>
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 bg-white px-4 py-8 sm:px-6 xl:px-8 dark:bg-gray-900">
+                <dt class="text-sm/6 font-medium text-gray-500 dark:text-gray-400">Storno / Nedošli</dt>
+                <dd class="text-xs font-medium text-rose-600 dark:text-rose-400">-3.15%</dd>
+                <dd class="w-full flex-none text-3xl/10 font-medium tracking-tight text-rose-600 dark:text-rose-400">6 termínů</dd>
+              </div>
+            </dl>
+          </div>
 
           <!-- Tabulka rozpadu výkonů -->
           <div class="overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-gray-900/5">
