@@ -6,6 +6,10 @@ Fakulta informatiky a managementu, Univerzita Hradec Králové
 
 ---
 
+> **Aktuální stav repozitáře:** obsahuje klikatelný prototyp uživatelského rozhraní (`index.html`), který běží čistě v prohlížeči nad syntetickými daty v paměti (po obnovení stránky se data vrátí do výchozího stavu). Doménová pravidla jsou v prototypu implementována v JavaScriptu jako předloha pro aplikační vrstvu. Backend, databáze, Docker a automatické testy popsané níže jsou **plánované** a v repozitáři zatím nejsou.
+
+---
+
 ## 1. Popis projektu a cíl řešení
 Cílem projektu je nahradit dosavadní papírový diář a ruční přepisování vykázaných bodů moderní webovou aplikací pro recepci ordinace (paní Věra) a 3 lékaře.
 
@@ -121,7 +125,9 @@ erDiagram
 ```
 
 ### Řešení klíčových omezení (Business & DB Constraints):
-* **Zákaz překryvu termínů**: Zajištěno na úrovni doménové služby a podpořeno databázovým indexem/omezením na intervaly `[start_time, end_time)` pro aktivní rezervace daného lékaře.
+* **Zákaz překryvu termínů**: Zajištěno na úrovni doménové služby a podpořeno databázovým indexem/omezením na intervaly `[start_time, end_time)` pro aktivní rezervace daného lékaře. Interval je polootevřený – nový termín smí začít přesně v okamžiku konce předchozího (např. 08:15–08:30 a 08:30–08:45 je platné).
+* **Ordinační hodiny**: Rezervace musí celá ležet uvnitř jednoho okna `DOCTOR_SCHEDULE` lékaře na pracovišti Na Vyhlídce (začátek i konec), začínat v 15minutové mřížce, nesmí být o víkendu, v minulosti ani v den evidované nepřítomnosti lékaře. Okna s jiným `location` (např. úterní odpoledne MUDr. Svobody) se v diáři zobrazují jako blokovaná.
+* **Číslo pojištěnce**: Ukládá se v normalizovaném tvaru `XXXXXX/XXXX`; při zakládání se ověřuje formát (9 nebo 10 číslic, platný měsíc a den, u 10místného čísla kontrolní dělitelnost 11) a unikátnost bez ohledu na zápis (s lomítkem / bez lomítka).
 * **Vazba M:N**: Realizována vazební entitou `VISIT_PROCEDURE` spojující `VISIT` a `MEDICAL_PROCEDURE` s doplňkovým údajem `count` (počet aplikací) a historizovaným počtem bodů `billed_points`.
 * **Zákaz mazání historie**: Pacienti ani návštěvy se fyzicky nemažou (pouze soft delete / auditní log).
 
@@ -137,10 +143,13 @@ Podle metodiky projektu jsou níže zapsána jednoznačná rozhodnutí k bodům,
    * *Rozhodnutí*: V první fázi vytváří rezervace výhradně recepce (paní Věra) v autentizovaném rozhraní. Architektura je však navržena s čistým REST API, které umožní budoucí napojení pacientského portálu bez úprav doménové logiky.
 3. **Co se zrušenou rezervací (odstranění z diáře vs. statistika)**:
    * *Rozhodnutí*: Zrušená rezervace se nemaže z databáze, ale změní stav na `CANCELLED` (příp. `NO_SHOW`), čímž se její časový interval okamžitě uvolní v kalendáři pro jiné pacienty. Současně zůstává v databázi pro statistiky nespolehlivých pacientů.
+   * `CANCELLED` = pacient se předem omluvil; `NO_SHOW` = nedostavil se bez omluvy (lze zaznamenat jen u termínu, který už nastal). Pacient je označen jako rizikový od 3 neomluvených absencí. Přeplánování z důvodu na straně ordinace (např. nemoc lékaře) se pacientovi jako zrušení nezapočítává.
+   * Odbavenou (`COMPLETED`) návštěvu již nelze zrušit.
 4. **Totožnost pacienta a duplicity (např. paní Nováková)**:
    * *Rozhodnutí*: Jednoznačným přirozeným identifikátorem pacienta je číslo pojištěnce (rodné číslo). Systém při zakládání nedovolí duplicitní identifikátor a při vyhledávání v recepci nabízí našeptávač podle příjmení i telefonního čísla.
 5. **Nemoc lékaře a výpadek ordinace**:
    * *Rozhodnutí*: Systém umožní označit nedostupnost lékaře a nabídne recepční přehledný interaktivní seznam všech dotčených rezervací s kontakty pro telefonické obvolání a tlačítky pro hromadné/individuální přeplánování na jiný termín či lékaře.
+   * V den evidované nepřítomnosti je diář lékaře pro nové rezervace zablokován. Původní termín se při přeplánování zruší až po úspěšném uložení náhradního termínu.
 
 ---
 
@@ -156,15 +165,20 @@ Podle metodiky projektu jsou níže zapsána jednoznačná rozhodnutí k bodům,
 
 ## 6. Spuštění projektu
 
-### Prerekvizity
+### Prototyp UI (aktuální stav)
+Stačí otevřít soubor `index.html` v prohlížeči (vyžaduje připojení k internetu kvůli Tailwind CSS z CDN). Data jsou syntetická a vztažená k aktuálnímu týdnu.
+
+### Plná aplikace (plánováno – zatím není v repozitáři)
+
+#### Prerekvizity
 * Nainstalovaný `Docker` a `docker compose`.
 * Git.
 
-### Postup krok za krokem
+#### Postup krok za krokem
 1. Klonování repozitáře:
    ```bash
-   git clone <URL_REPOZITARE>
-   cd Programovani_Projekt
+   git clone https://github.com/NovakGroup/ppro-clinic-reservation.git
+   cd ppro-clinic-reservation
    ```
 2. Vytvoření souboru prostředí:
    ```bash
@@ -180,7 +194,7 @@ Podle metodiky projektu jsou níže zapsána jednoznačná rozhodnutí k bodům,
 
 ---
 
-## 7. Testování
+## 7. Testování (plánováno)
 * **Jednotkové testy** (aplikační logika, validace překryvů, výpočet bodů):
   ```bash
   docker compose run --rm test-unit
@@ -194,3 +208,4 @@ Podle metodiky projektu jsou níže zapsána jednoznačná rozhodnutí k bodům,
 
 ## 8. Historie změn (Changelog)
 * `2026-10-23`: Inicializace repozitáře, definice pravidel spolupráce (`agent.md`), architektonický návrh a specifikace zadání A v `README.md`.
+* `2026-10-30`: Oprava prototypu UI – vynucení ordinačních hodin dle strukturovaného rozvrhu lékařů, polootevřené intervaly kolizí (termín smí navazovat), validace času a 15min mřížky, výběr data v rezervaci, rozlišení `CANCELLED` / `NO_SHOW`, validace a normalizace RČ a telefonu, ochrana proti XSS, skutečné ukládání návštěv a výkonů (historizované body), výkazy počítané z dat s filtrem lékaře a měsíce a exportem CSV, evidence nepřítomnosti lékaře s blokací diáře a přeplánováním, vyhledávání bez diakritiky. Odstraněn duplicitní `prototype.html`, přidán `.gitignore`, README uvedeno do souladu se skutečným stavem.
