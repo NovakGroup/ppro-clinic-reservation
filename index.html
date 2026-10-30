@@ -897,8 +897,10 @@
           if (a.doctorId !== db.activeDoctorId || a.date !== isoDate || a.status === 'CANCELLED') return false;
           const aStart = timeToMinutes(a.time);
           const aEnd = aStart + a.duration;
-          return aStart < slotStart && aEnd > slotStart;
-        });
+          // Slot je "ongoing" pokud termín ZAČAL před tímto slotem A STÁLE ZASAHUJE do/za tento slot
+          // aEnd >= slotStart: slot PŘESNĚ na konci termínu je také blokován
+          // Příklad: 08:45 + 30 min = konec 09:15 → slot 09:15 je také "Pokračování termínu"
+          return aStart < slotStart && aEnd >= slotStart;        });
 
         const li = document.createElement('li');
         li.className = "flex items-center justify-between gap-x-6 py-3.5 px-6 hover:bg-slate-50/80 transition";
@@ -1023,12 +1025,13 @@
         return;
       }
 
-      // Pravidlo 2: Zákaz kolize časových intervalů [start, end)
+      // Pravidlo 2: Zákaz kolize časových intervalů – nová rezervace nesmí začínat dříve než skončí existující
+      // aEnd >= newStart: blokujeme i start přesně na konci předchozího termínu
       const conflict = db.appointments.find(a => {
         if (a.doctorId !== docId || a.date !== isoDate || a.status === 'CANCELLED') return false;
         const aStart = timeToMinutes(a.time);
         const aEnd = aStart + a.duration;
-        return (aStart < newEnd && aEnd > newStart);
+        return (aStart < newEnd && aEnd >= newStart);
       });
 
       if (conflict) {
